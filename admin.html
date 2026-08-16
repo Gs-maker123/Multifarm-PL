@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MultiFarm Pro - Administration</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg-primary:linear-gradient(135deg,#0a0e1a 0%,#0f172a 100%);--bg-card:linear-gradient(145deg,#1a2438,#0f172a);--bg-header:rgba(15,23,42,0.6);--text-primary:#f1f5f9;--text-secondary:#94a3b8;--border-color:rgba(255,217,102,0.2);--input-bg:#0f172a;--input-border:#334155}
+        body.light-mode{--bg-primary:linear-gradient(135deg,#e0e7ff 0%,#f1f5f9 100%);--bg-card:linear-gradient(145deg,#fff,#f8fafc);--bg-header:rgba(255,255,255,0.8);--text-primary:#1e293b;--text-secondary:#475569;--border-color:rgba(100,116,139,0.2);--input-bg:#fff;--input-border:#cbd5e1}
+        body{background:var(--bg-primary);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text-primary);min-height:100vh;display:flex;flex-direction:column;transition:all .3s ease}
+        .app-wrapper{max-width:1800px;margin:0 auto;padding:0 20px;flex:1}
+        .header{position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;background:var(--bg-header);backdrop-filter:blur(4px);padding:10px 16px;border-radius:24px;border:1px solid var(--border-color)}
+        .logo-area h1{font-size:1.3rem;background:linear-gradient(135deg,#e74c3c,#c0392b);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .logo-area p{font-size:.7rem;color:var(--text-secondary)}
+        .action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+        .btn{border:none;border-radius:40px;padding:6px 12px;font-weight:600;font-size:.7rem;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px;background:#1e293b;color:#e2e8f0}
+        .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+        .btn-primary{background:linear-gradient(135deg,#2c5f2d,#1e3a1e);color:#fff}
+        .btn-danger{background:linear-gradient(135deg,#c0392b,#a82313);color:#fff}
+        .btn-info{background:linear-gradient(135deg,#2980b9,#1f618d);color:#fff}
+        .btn-purple{background:linear-gradient(135deg,#8e44ad,#6c3483);color:#fff}
+        .btn-warning{background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff}
+        .btn-success{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff}
+        .btn-theme{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff}
+        .admin-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--border-color);padding-bottom:10px;flex-wrap:wrap}
+        .admin-tab{padding:6px 16px;border-radius:30px;cursor:pointer;background:var(--bg-header);color:var(--text-secondary);font-weight:600;font-size:.75rem}
+        .admin-tab.active{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+        .tab-content{display:block}.tab-content.hidden{display:none}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:20px}
+        .stat-card{background:var(--bg-card);border-radius:20px;padding:16px;text-align:center;border:1px solid var(--border-color)}
+        .stat-value{font-size:1.6rem;font-weight:700;color:#e74c3c}
+        .admin-section{background:var(--bg-card);border-radius:20px;padding:16px;margin-bottom:20px;border:1px solid var(--border-color)}
+        .section-title{font-size:1rem;color:#e74c3c;margin-bottom:12px;display:flex;align-items:center;gap:6px;border-left:4px solid #e74c3c;padding-left:10px}
+        .admin-table{width:100%;border-collapse:collapse;font-size:.7rem}
+        .admin-table th{text-align:left;padding:8px;background:rgba(231,76,60,0.1);color:#e74c3c}
+        .admin-table td{padding:8px;border-bottom:1px solid var(--border-color)}
+        .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+        .dashboard-card{background:var(--bg-card);border-radius:20px;padding:16px;border:1px solid var(--border-color)}
+        .card-title{font-size:.85rem;color:#e74c3c;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+        .filter-input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:8px 12px;color:var(--text-primary);width:100%}
+        .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.6rem;font-weight:700}
+        .badge-active{background:#2ecc71;color:#fff}
+        .badge-inactive{background:#e74c3c;color:#fff}
+        .badge-pending{background:#f39c12;color:#1a1a2e}
+        .badge-success{background:#2ecc71;color:#fff}
+        .notification-toast{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:10px;font-size:.75rem;z-index:2000;animation:slideIn .3s ease}
+        .notification-success{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff}
+        .notification-warning{background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        .payment-popup{position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;padding:12px;border-radius:16px;z-index:10000;box-shadow:0 5px 20px rgba(0,0,0,0.3);animation:slideUp .3s ease;max-width:280px;cursor:pointer}
+        @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+        .main-footer{position:sticky;bottom:0;z-index:100;background:var(--bg-header);border-top:1px solid var(--border-color);padding:10px;text-align:center;margin-top:20px;backdrop-filter:blur(4px)}
+        .footer-copyright{font-size:.6rem;color:var(--text-secondary)}
+        @media (max-width:768px){.app-wrapper{padding:0 12px}.header{flex-direction:column;text-align:center}.action-buttons{justify-content:center}.admin-tabs{justify-content:center}.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-value{font-size:1.2rem}}
+        @media (max-width:480px){.stats-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <div class="header">
+        <div class="logo-area">
+            <h1>👑 MultiFarm Pro · Administration</h1>
+            <p>Panneau d'administration | Gestion des paiements</p>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-theme" id="themeToggleBtn">🌓 Thème</button>
+            <button class="btn btn-info" id="exportBtn">📤 Export</button>
+            <button class="btn btn-purple" id="importBtn">📥 Import</button>
+            <button class="btn btn-success" id="backupBtn">☁️ Cloud</button>
+            <button class="btn btn-danger" id="resetBtn">🗑️ Reset</button>
+            <button class="btn btn-primary" id="goToAppBtn">🏠 Retour</button>
+        </div>
+    </div>
+
+    <div class="admin-tabs">
+        <div class="admin-tab active" data-tab="dashboard">📊 Dashboard</div>
+        <div class="admin-tab" data-tab="paiements">💳 Paiements</div>
+        <div class="admin-tab" data-tab="passeurs">👥 Passeurs</div>
+        <div class="admin-tab" data-tab="clients">👤 Clients</div>
+        <div class="admin-tab" data-tab="devis">📄 Devis</div>
+        <div class="admin-tab" data-tab="logs">📜 Logs</div>
+    </div>
+
+    <div id="dashboardTab" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" id="statPaiementsEnAttente">0</div><div>En attente</div></div>
+            <div class="stat-card"><div class="stat-value" id="statPaiementsValides">0</div><div>Validés</div></div>
+            <div class="stat-card"><div class="stat-value" id="statDevisEnCours">0</div><div>Devis en cours</div></div>
+            <div class="stat-card"><div class="stat-value" id="statCommandes">0</div><div>Commandes</div></div>
+        </div>
+        <div class="dashboard-grid">
+            <div class="dashboard-card"><div class="card-title">📈 Évolution</div><canvas id="paymentChart" style="height:160px"></canvas></div>
+            <div class="dashboard-card"><div class="card-title">💰 Répartition</div><canvas id="paymentMethodChart" style="height:160px"></canvas></div>
+        </div>
+        <div class="admin-section"><div class="section-title">⏳ Derniers paiements</div><div id="recentPaymentsList"></div></div>
+    </div>
+
+    <div id="paiementsTab" class="tab-content hidden">
+        <div class="admin-section"><div class="section-title">⏳ En attente</div><div id="pendingPaymentsList"></div></div>
+        <div class="admin-section"><div class="section-title">✅ Validés</div><div id="validatedPaymentsList"></div></div>
+    </div>
+
+    <div id="passeursTab" class="tab-content hidden">
+        <div class="admin-section">
+            <div class="section-title">👥 Gestion des passeurs</div>
+            <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap">
+                <input type="text" id="newPasseurName" placeholder="Nom" style="flex:1;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:8px">
+                <select id="newPasseurStatus" style="background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:8px">
+                    <option value="active">🟢 Actif</option>
+                    <option value="inactive">🔴 Inactif</option>
+                    <option value="vacation">🌴 Congé</option>
+                </select>
+                <button id="addPasseurBtn" class="btn btn-success">➕ Ajouter</button>
+            </div>
+            <table class="admin-table"><thead><tr><th>#</th><th>Nom</th><th>Statut</th><th>Commandes</th><th>CA</th><th>Actions</th></tr></thead><tbody id="passeursList"></tbody></table>
+        </div>
+    </div>
+
+    <div id="clientsTab" class="tab-content hidden">
+        <div class="admin-section"><div class="section-title">🏆 Top Clients</div><table class="admin-table"><thead><tr><th>#</th><th>Client</th><th>Commandes</th><th>Total</th><th>Dernière</th></tr></thead><tbody id="topClientsList"></tbody></table></div>
+        <div class="admin-section"><div class="section-title">📋 Tous les clients</div><input type="text" id="searchClientAdmin" class="filter-input" placeholder="🔍 Rechercher..." style="margin-bottom:15px"><table class="admin-table"><thead><tr><th>Client</th><th>Commandes</th><th>Total</th><th>Moyenne</th><th>Dernière</th></tr></thead><tbody id="allClientsList"></tbody></table></div>
+    </div>
+
+    <div id="devisTab" class="tab-content hidden">
+        <div class="admin-section"><div class="section-title">📄 Tous les devis</div><input type="text" id="searchDevis" class="filter-input" placeholder="🔍 Rechercher..." style="margin-bottom:15px"><table class="admin-table"><thead><tr><th>N°</th><th>Code</th><th>Client</th><th>Discord</th><th>Pseudo jeu</th><th>Serveur</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead><tbody id="devisList"></tbody></td></div>
+    </div>
+
+    <div id="logsTab" class="tab-content hidden">
+        <div class="admin-section"><div class="section-title">📜 Journal d'audit</div><div style="margin-bottom:10px"><button id="exportLogsBtn" class="btn btn-info">📤 Exporter</button><button id="clearLogsBtn" class="btn btn-warning">🗑️ Effacer</button></div><div style="max-height:400px;overflow-y:auto"><table class="admin-table"><thead><tr><th>Date</th><th>Action</th><th>Détails</th></tr></thead><tbody id="auditLogList"></tbody></tr></div></div>
+    </div>
+</div>
+
+<footer class="main-footer"><div class="footer-copyright">⚡ MultiFarm - Administration Panel © 2026</div></footer>
+
+<script>
+(function() {
+    // DONNEES DE DEMONSTRATION
+    var passeursAdmin = [
+        {id:1, name:"GSTK", status:"active", commands:12, revenue:18000000},
+        {id:2, name:"MultiFarm", status:"active", commands:8, revenue:12000000},
+        {id:3, name:"SpeedRun", status:"active", commands:5, revenue:8000000},
+        {id:4, name:"XPBoost", status:"vacation", commands:3, revenue:4000000}
+    ];
+    
+    var clients = [
+        {name:"JeanEude", commands:3, total:25000000, lastDate:new Date().toISOString()},
+        {name:"Sophie", commands:2, total:15000000, lastDate:new Date().toISOString()},
+        {name:"Marc", commands:1, total:8000000, lastDate:new Date().toISOString()}
+    ];
+    
+    var devisList = [
+        {id:1, numero:"DEV-001", code:"ABC123", client:"Jean Client", discord:"Jean#1234", pseudoJeu:"JeanLeBoss", serveur:"Jahash", total:18000000, status:"brouillon", date:new Date().toISOString()},
+        {id:2, numero:"DEV-002", code:"DEF456", client:"Sophie Client", discord:"Sophie#5678", pseudoJeu:"SoSo", serveur:"Agride", total:9000000, status:"accepte", date:new Date().toISOString()}
+    ];
+    
+    var paymentsList = [];
+    var auditLog = [];
+    var charts = {};
+    var lastPaymentCount = 0;
+
+    function formatMoney(v) {
+        if (v === undefined) return "0 K";
+        return v.toLocaleString("fr-FR") + " K";
+    }
+
+    function escapeHtml(s) {
+        if (!s) return "";
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function getMethodIcon(m) {
+        if (m === "kamas") return "💰";
+        if (m === "ogrine") return "✨";
+        if (m === "paypal") return "💳";
+        if (m === "virement") return "🏦";
+        return "💵";
+    }
+
+    function showNotification(msg, type) {
+        var div = document.createElement("div");
+        div.className = "notification-toast notification-" + (type === "success" ? "success" : "warning");
+        div.innerHTML = (type === "success" ? "✅ " : "⚠️ ") + msg;
+        document.body.appendChild(div);
+        setTimeout(function() { div.remove(); }, 3000);
+    }
+
+    function addAuditLog(action, details) {
+        auditLog.unshift({id:Date.now(), date:new Date().toISOString(), action:action, details:details});
+        if (auditLog.length > 200) auditLog.pop();
+        renderAuditLog();
+    }
+
+    function updateDashboardStats() {
+        var pending = paymentsList.filter(function(p) { return p.status === "en_attente"; }).length;
+        var valides = paymentsList.filter(function(p) { return p.status === "valide"; }).length;
+        var devisEncours = devisList.filter(function(d) { return d.status !== "paye" && d.status !== "accepte"; }).length;
+        document.getElementById("statPaiementsEnAttente").innerHTML = pending;
+        document.getElementById("statPaiementsValides").innerHTML = valides;
+        document.getElementById("statDevisEnCours").innerHTML = devisEncours;
+        document.getElementById("statCommandes").innerHTML = "25";
+        updateCharts();
+    }
+
+    function updateCharts() {
+        var last30Days = [];
+        for (var i = 29; i >= 0; i--) {
+            last30Days.push(Math.random() * 5000000);
+        }
+        var days = [];
+        for (var i = 29; i >= 0; i--) {
+            days.push("J" + (i+1));
+        }
+        if (charts.paymentChart) charts.paymentChart.destroy();
+        var ctx = document.getElementById("paymentChart");
+        if (ctx) {
+            charts.paymentChart = new Chart(ctx, {
+                type: "line",
+                data: {labels: days, datasets: [{label: "Paiements", data: last30Days, borderColor: "#e74c3c", fill: true, tension: 0.4}]},
+                options: {responsive: true, scales: {y: {ticks: {callback: function(v) { return formatMoney(v); }}}}}
+            });
+        }
+        
+        var methodStats = {kamas: 5000000, ogrine: 3000000, paypal: 2000000, virement: 1000000};
+        if (charts.paymentMethodChart) charts.paymentMethodChart.destroy();
+        var ctx2 = document.getElementById("paymentMethodChart");
+        if (ctx2) {
+            charts.paymentMethodChart = new Chart(ctx2, {
+                type: "doughnut",
+                data: {labels: ["Kamas", "Ogrines", "PayPal", "Virement"], datasets: [{data: [methodStats.kamas, methodStats.ogrine, methodStats.paypal, methodStats.virement], backgroundColor: ["#f39c12", "#9b59b6", "#3498db", "#2ecc71"]}]},
+                options: {responsive: true}
+            });
+        }
+    }
+
+    function renderPaymentsList() {
+        var pending = paymentsList.filter(function(p) { return p.status === "en_attente"; });
+        var validated = paymentsList.filter(function(p) { return p.status === "valide"; });
+        
+        var pc = document.getElementById("pendingPaymentsList");
+        if (pc) {
+            if (pending.length === 0) {
+                pc.innerHTML = "<div style=\"text-align:center;padding:30px\">✅ Aucun paiement en attente</div>";
+            } else {
+                var html = "<table class=\"admin-table\"><thead><tr><th>Date</th><th>Client</th><th>Montant</th><th>Actions</th></tr></thead><tbody>";
+                for (var i = 0; i < pending.length; i++) {
+                    var p = pending[i];
+                    html += "<tr>";
+                    html += "<td>" + new Date(p.date).toLocaleString() + "</td>";
+                    html += "<td>" + escapeHtml(p.client) + "</td>";
+                    html += "<td>" + formatMoney(p.montant) + "</td>";
+                    html += "<td><button class=\"validate-payment\" data-id=\"" + p.id + "\" style=\"background:#2ecc71;border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer\">✅ Valider</button> <button class=\"reject-payment\" data-id=\"" + p.id + "\" style=\"background:#e74c3c;border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer\">❌ Rejeter</button></td>";
+                    html += "</tr>";
+                }
+                html += "</tbody></table>";
+                pc.innerHTML = html;
+            }
+        }
+        
+        var vc = document.getElementById("validatedPaymentsList");
+        if (vc) {
+            if (validated.length === 0) {
+                vc.innerHTML = "<div style=\"text-align:center;padding:30px\">📭 Aucun paiement validé</div>";
+            } else {
+                var html = "<table class=\"admin-table\"><thead><tr><th>Date</th><th>Client</th><th>Montant</th></tr></thead><tbody>";
+                for (var i = 0; i < validated.length; i++) {
+                    var p = validated[i];
+                    html += "<tr>";
+                    html += "<td>" + new Date(p.date).toLocaleString() + "</td>";
+                    html += "<td>" + escapeHtml(p.client) + "</td>";
+                    html += "<td>" + formatMoney(p.montant) + "</td>";
+                    html += "</tr>";
+                }
+                html += "</tbody></table>";
+                vc.innerHTML = html;
+            }
+        }
+        
+        document.querySelectorAll(".validate-payment").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                var id = parseInt(btn.dataset.id);
+                var payment = null;
+                for (var i = 0; i < paymentsList.length; i++) {
+                    if (paymentsList[i].id === id) { payment = paymentsList[i]; break; }
+                }
+                if (payment && confirm("Valider le paiement de " + payment.client + " ?")) {
+                    payment.status = "valide";
+                    payment.dateValidation = new Date().toISOString();
+                    renderPaymentsList();
+                    renderRecentPayments();
+                    updateDashboardStats();
+                    showNotification("Paiement de " + payment.client + " validé !", "success");
+                    addAuditLog("validation_paiement", payment.client);
+                }
+            });
+        });
+        
+        document.querySelectorAll(".reject-payment").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                var id = parseInt(btn.dataset.id);
+                var payment = null;
+                for (var i = 0; i < paymentsList.length; i++) {
+                    if (paymentsList[i].id === id) { payment = paymentsList[i]; break; }
+                }
+                if (payment && confirm("Rejeter le paiement de " + payment.client + " ?")) {
+                    payment.status = "rejete";
+                    renderPaymentsList();
+                    renderRecentPayments();
+                    showNotification("Paiement de " + payment.client + " rejeté", "warning");
+                    addAuditLog("rejet_paiement", payment.client);
+                }
+            });
+        });
+    }
+
+    function renderRecentPayments() {
+        var cont = document.getElementById("recentPaymentsList");
+        if (!cont) return;
+        var pending = paymentsList.filter(function(p) { return p.status === "en_attente"; });
+        pending = pending.slice(0, 5);
+        if (pending.length === 0) {
+            cont.innerHTML = "<div style=\"text-align:center;padding:20px\">✅ Aucun paiement</div>";
+        } else {
+            var html = "<table class=\"admin-table\"><thead><tr><th>Date</th><th>Client</th><th>Montant</th><th>Actions</th></tr></thead><tbody>";
+            for (var i = 0; i < pending.length; i++) {
+                var p = pending[i];
+                html += "<tr>";
+                html += "<td>" + new Date(p.date).toLocaleString() + "</td>";
+                html += "<td>" + escapeHtml(p.client) + "</td>";
+                html += "<td>" + formatMoney(p.montant) + "</td>";
+                html += "<td><button class=\"goto-payment\" data-id=\"" + p.id + "\" style=\"background:#3498db;border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer\">📋 Voir</button></td>";
+                html += "</tr>";
+            }
+            html += "</tbody></table>";
+            cont.innerHTML = html;
+        }
+        document.querySelectorAll(".goto-payment").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                switchTab("paiements");
+                setTimeout(function() { renderPaymentsList(); }, 100);
+            });
+        });
+    }
+
+    function renderPasseursList() {
+        var tbody = document.getElementById("passeursList");
+        if (!tbody) return;
+        var html = "";
+        for (var i = 0; i < passeursAdmin.length; i++) {
+            var p = passeursAdmin[i];
+            var badgeClass = (p.status === "active") ? "badge-active" : "badge-inactive";
+            var badgeText = (p.status === "active") ? "🟢 Actif" : ((p.status === "vacation") ? "🌴 Congé" : "🔴 Inactif");
+            html += "<tr>";
+            html += "<td>" + (i+1) + "</td>";
+            html += "<td><strong>" + escapeHtml(p.name) + "</strong></td>";
+            html += "<td><span class=\"" + badgeClass + "\">" + badgeText + "</span></td>";
+            html += "<td>" + p.commands + "</td>";
+            html += "<td>" + formatMoney(p.revenue) + "</td>";
+            html += "<td><button class=\"delete-passeur\" data-id=\"" + p.id + "\" style=\"background:#e74c3c;border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer\">🗑️</button></td>";
+            html += "</tr>";
+        }
+        tbody.innerHTML = html;
+        document.querySelectorAll(".delete-passeur").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                var id = parseInt(btn.dataset.id);
+                if (confirm("Supprimer ce passeur ?")) {
+                    var newList = [];
+                    for (var i = 0; i < passeursAdmin.length; i++) {
+                        if (passeursAdmin[i].id !== id) newList.push(passeursAdmin[i]);
+                    }
+                    passeursAdmin = newList;
+                    renderPasseursList();
+                    showNotification("Passeur supprimé", "success");
+                    addAuditLog("suppression_passeur", "ID: " + id);
+                }
+            });
+        });
+    }
+
+    function renderClientsList() {
+        var sorted = clients.slice();
+        sorted.sort(function(a, b) { return b.total - a.total; });
+        var top10 = sorted.slice(0, 10);
+        var html = "";
+        for (var i = 0; i < top10.length; i++) {
+            var c = top10[i];
+            html += "<tr>";
+            html += "<td>" + (i+1) + "</td>";
+            html += "<td><span style=\"display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e74c3c;margin-right:6px\">" + c.name.charAt(0).toUpperCase() + "</span> " + escapeHtml(c.name) + "</td>";
+            html += "<td>" + c.commands + "</td>";
+            html += "<td>" + formatMoney(c.total) + "</td>";
+            html += "<td>" + (c.lastDate ? new Date(c.lastDate).toLocaleDateString() : "-") + "</td>";
+            html += "</tr>";
+        }
+        document.getElementById("topClientsList").innerHTML = html;
+        
+        var search = document.getElementById("searchClientAdmin") ? document.getElementById("searchClientAdmin").value.toLowerCase() : "";
+        var filtered = [];
+        for (var i = 0; i < clients.length; i++) {
+            if (clients[i].name.toLowerCase().indexOf(search) !== -1) filtered.push(clients[i]);
+        }
+        var htmlAll = "";
+        for (var i = 0; i < filtered.length; i++) {
+            var c = filtered[i];
+            htmlAll += "<tr>";
+            htmlAll += "<td><span style=\"display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e74c3c;margin-right:6px\">" + c.name.charAt(0).toUpperCase() + "</span> " + escapeHtml(c.name) + "</td>";
+            htmlAll += "<td>" + c.commands + "</td>";
+            htmlAll += "<td>" + formatMoney(c.total) + "</td>";
+            htmlAll += "<td>" + formatMoney(c.total / c.commands) + "</td>";
+            htmlAll += "<td>" + (c.lastDate ? new Date(c.lastDate).toLocaleDateString() : "-") + "</td>";
+            htmlAll += "</tr>";
+        }
+        document.getElementById("allClientsList").innerHTML = htmlAll;
+    }
+
+    function renderDevisList() {
+        var cont = document.getElementById("devisList");
+        if (!cont) return;
+        var search = document.getElementById("searchDevis") ? document.getElementById("searchDevis").value.toLowerCase() : "";
+        var filtered = [];
+        for (var i = 0; i < devisList.length; i++) {
+            var d = devisList[i];
+            if (d.client.toLowerCase().indexOf(search) !== -1 || d.numero.toLowerCase().indexOf(search) !== -1 || d.code.toLowerCase().indexOf(search) !== -1) {
+                filtered.push(d);
+            }
+        }
+        if (filtered.length === 0) {
+            cont.innerHTML = "<tr><td colspan=\"10\" style=\"text-align:center;padding:30px\">📭 Aucun devis</td></tr>";
+            return;
+        }
+        var html = "";
+        for (var i = 0; i < filtered.length; i++) {
+            var d = filtered[i];
+            var badgeClass = (d.status === "paye") ? "badge-success" : ((d.status === "accepte") ? "badge-active" : "badge-pending");
+            var badgeText = (d.status === "paye") ? "✅ Payé" : ((d.status === "accepte") ? "👍 Accepté" : "⏳ En attente");
+            html += "<tr>";
+            html += "<td><strong>" + d.numero + "</strong></td>";
+            html += "<td><span style=\"font-family:monospace;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px\">" + d.code + "</span></td>";
+            html += "<td>" + escapeHtml(d.client) + "</td>";
+            html += "<td>" + escapeHtml(d.discord || "-") + "</td>";
+            html += "<td>" + escapeHtml(d.pseudoJeu || "-") + "</td>";
+            html += "<td>" + escapeHtml(d.serveur || "-") + "</td>";
+            html += "<td style=\"color:#2ecc71\">" + formatMoney(d.total) + "</td>";
+            html += "<td><span class=\"" + badgeClass + "\">" + badgeText + "</span></td>";
+            html += "<td>" + new Date(d.date).toLocaleDateString() + "</td>";
+            html += "<td><button class=\"view-devis\" data-code=\"" + d.code + "\" style=\"background:#3498db;border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer\">👁️ Voir</button></td>";
+            html += "</tr>";
+        }
+        cont.innerHTML = html;
+        document.querySelectorAll(".view-devis").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                window.open("client.html?devis=" + this.dataset.code, "_blank");
+            });
+        });
+    }
+
+    function renderAuditLog() {
+        var tbody = document.getElementById("auditLogList");
+        if (!tbody) return;
+        var html = "";
+        var limit = auditLog.length < 100 ? auditLog.length : 100;
+        for (var i = 0; i < limit; i++) {
+            var log = auditLog[i];
+            html += "<tr>";
+            html += "<td>" + new Date(log.date).toLocaleString() + "</td>";
+            html += "<td>" + log.action + "</td>";
+            html += "<td>" + escapeHtml(log.details) + "</td>";
+            html += "</tr>";
+        }
+        tbody.innerHTML = html;
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll(".tab-content").forEach(function(tab) { tab.classList.add("hidden"); });
+        document.getElementById(tabId + "Tab").classList.remove("hidden");
+        document.querySelectorAll(".admin-tab").forEach(function(tab) { tab.classList.remove("active"); });
+        document.querySelector(".admin-tab[data-tab=\"" + tabId + "\"]").classList.add("active");
+        if (tabId === "paiements") renderPaymentsList();
+        if (tabId === "passeurs") renderPasseursList();
+        if (tabId === "clients") renderClientsList();
+        if (tabId === "devis") renderDevisList();
+        if (tabId === "logs") renderAuditLog();
+        if (tabId === "dashboard") updateDashboardStats();
+    }
+
+    function init() {
+        renderPasseursList();
+        renderClientsList();
+        renderDevisList();
+        renderAuditLog();
+        updateDashboardStats();
+        
+        document.getElementById("addPasseurBtn").addEventListener("click", function() {
+            var name = document.getElementById("newPasseurName").value.trim();
+            var status = document.getElementById("newPasseurStatus").value;
+            var exists = false;
+            for (var i = 0; i < passeursAdmin.length; i++) {
+                if (passeursAdmin[i].name === name) { exists = true; break; }
+            }
+            if (name && !exists) {
+                var maxId = 0;
+                for (var i = 0; i < passeursAdmin.length; i++) {
+                    if (passeursAdmin[i].id > maxId) maxId = passeursAdmin[i].id;
+                }
+                passeursAdmin.push({id: maxId + 1, name: name, status: status, commands: 0, revenue: 0});
+                renderPasseursList();
+                showNotification("Passeur " + name + " ajouté", "success");
+                addAuditLog("ajout_passeur", name);
+                document.getElementById("newPasseurName").value = "";
+            } else {
+                showNotification("Nom invalide ou existe déjà", "warning");
+            }
+        });
+        
+        document.getElementById("searchClientAdmin").addEventListener("input", function() { renderClientsList(); });
+        document.getElementById("searchDevis").addEventListener("input", function() { renderDevisList(); });
+        document.getElementById("exportLogsBtn").addEventListener("click", function() {
+            var blob = new Blob([JSON.stringify(auditLog, null, 2)], {type: "application/json"});
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "audit_log_" + new Date().toISOString().split("T")[0] + ".json";
+            a.click();
+            showNotification("Logs exportés", "success");
+        });
+        document.getElementById("clearLogsBtn").addEventListener("click", function() {
+            if (confirm("Effacer tous les logs ?")) {
+                auditLog = [];
+                renderAuditLog();
+                showNotification("Logs effacés", "success");
+                addAuditLog("clear_logs", "Tous les logs effacés");
+            }
+        });
+        document.getElementById("goToAppBtn").addEventListener("click", function() { window.location.href = "PL.html"; });
+        document.getElementById("themeToggleBtn").addEventListener("click", function() {
+            document.body.classList.toggle("light-mode");
+            localStorage.setItem("multifarm_theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+            updateCharts();
+        });
+        document.getElementById("exportBtn").addEventListener("click", function() {
+            var data = {date: new Date().toISOString(), passeursAdmin: passeursAdmin, clients: clients, devisList: devisList, paymentsList: paymentsList, auditLog: auditLog};
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}));
+            a.download = "admin_export_" + new Date().toISOString().split("T")[0] + ".json";
+            a.click();
+            showNotification("Export réussi", "success");
+            addAuditLog("export_donnees", "Export complet");
+        });
+        document.getElementById("importBtn").addEventListener("click", function() {
+            var input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        var data = JSON.parse(ev.target.result);
+                        if (data.passeursAdmin) passeursAdmin = data.passeursAdmin;
+                        if (data.clients) clients = data.clients;
+                        if (data.devisList) devisList = data.devisList;
+                        if (data.paymentsList) paymentsList = data.paymentsList;
+                        renderPasseursList();
+                        renderClientsList();
+                        renderDevisList();
+                        updateDashboardStats();
+                        showNotification("Import réussi", "success");
+                        addAuditLog("import_donnees", "Import données");
+                    } catch(err) { alert("Erreur import"); }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+        document.getElementById("backupBtn").addEventListener("click", function() {
+            showNotification("☁️ Sauvegarde cloud (simulée)", "success");
+            addAuditLog("backup_cloud", "Sauvegarde effectuée");
+        });
+        document.getElementById("resetBtn").addEventListener("click", function() {
+            if (confirm("⚠️ Supprimer TOUTES les données admin ?")) {
+                location.reload();
+            }
+        });
+        
+        var savedTheme = localStorage.getItem("multifarm_theme");
+        if (savedTheme === "light") document.body.classList.add("light-mode");
+        
+        document.querySelectorAll(".admin-tab").forEach(function(tab) {
+            tab.addEventListener("click", function() { switchTab(this.dataset.tab); });
+        });
+    }
+    init();
+})();
+</script>
+</body>
+</html>

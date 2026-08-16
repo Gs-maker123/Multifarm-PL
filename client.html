@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>MultiFarm Pro - Consultation Devis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: linear-gradient(135deg, #0a0e1a 0%, #0f172a 100%);
+            --bg-card: linear-gradient(145deg, #1a2438, #0f172a);
+            --bg-header: rgba(15, 23, 42, 0.6);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(255, 217, 102, 0.2);
+            --input-bg: #0f172a;
+            --input-border: #334155;
+        }
+
+        body.light-mode {
+            --bg-primary: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%);
+            --bg-card: linear-gradient(145deg, #ffffff, #f8fafc);
+            --bg-header: rgba(255, 255, 255, 0.8);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: rgba(100, 116, 139, 0.2);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+        }
+
+        body {
+            background: var(--bg-primary);
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #3b4b6e; border-radius: 10px; }
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: var(--bg-header);
+            backdrop-filter: blur(4px);
+            padding: 12px 20px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .logo-area h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #FFD966, #FFA500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-area p {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .btn-primary { background: linear-gradient(135deg, #2c5f2d, #1e3a1e); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #c0392b, #a82313); color: white; }
+        .btn-info { background: linear-gradient(135deg, #2980b9, #1f618d); color: white; }
+        .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+        .btn-theme { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; }
+
+        .search-section {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-section h2 {
+            color: #FFD966;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .code-input {
+            background: var(--input-bg);
+            border: 2px solid var(--input-border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            text-align: center;
+            letter-spacing: 3px;
+            font-family: monospace;
+            flex: 1;
+            min-width: 180px;
+            text-transform: uppercase;
+        }
+
+        .devis-container {
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 2px solid #27ae60;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .close-devis-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #e74c3c;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .close-devis-btn:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .devis-header {
+            background: linear-gradient(135deg, #27ae60, #1e8449);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .devis-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .devis-body {
+            padding: 20px;
+        }
+
+        .info-client {
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .prestations-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.75rem;
+        }
+
+        .prestations-table th {
+            background: rgba(39, 174, 96, 0.1);
+            padding: 10px 8px;
+            text-align: left;
+            color: #FFD966;
+        }
+
+        .prestations-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .total-box {
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .total-final {
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding-top: 12px;
+            border-top: 2px solid var(--border-color);
+            margin-top: 8px;
+        }
+
+        .payment-section {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .payment-method {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .payment-method.selected {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.2);
+        }
+
+        .payment-method .icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .payment-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2ecc71;
+            text-align: right;
+            margin-bottom: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .expired-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+        }
+
+        .footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-header);
+            backdrop-filter: blur(4px);
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 280px;
+        }
+        .notification-success { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .notification-error { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+        .notification-info { background: linear-gradient(135deg, #2980b9, #3498db); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 15px;
+            color: #e74c3c;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .app-wrapper { padding: 0 12px; }
+            .header { flex-direction: column; text-align: center; padding: 10px 16px; }
+            .action-buttons { justify-content: center; }
+            .logo-area h1 { font-size: 1.2rem; }
+            .devis-body { padding: 16px; }
+            .prestations-table { font-size: 0.7rem; }
+            .payment-methods { flex-direction: column; }
+            .payment-method { min-width: auto; }
+            .action-buttons .btn { width: 100%; justify-content: center; }
+            .info-grid { grid-template-columns: 1fr; }
+            .close-devis-btn { width: 30px; height: 30px; font-size: 1rem; top: 10px; right: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .code-input { font-size: 0.85rem; letter-spacing: 2px; }
+            .search-section h2 { font-size: 1.1rem; }
+            .notification-toast { max-width: 90%; right: 5%; left: 5%; top: 10px; }
+        }
+
+        @media print {
+            .header, .search-section, .payment-section, .action-buttons, .footer, .close-devis-btn {
+                display: none !important;
+            }
+            .devis-container { margin: 0; border: none; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<div class="app-wrapper">
+    <div class="header">
+        <div class="logo-area">
+            <h1>⚡ MultiFarm Pro</h1>
+            <p>Consultation de devis | Paiement sécurisé</p>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-theme" id="themeToggleBtn">🌓 Thème</button>
+        </div>
+    </div>
+
+    <div class="search-section" id="searchSection">
+        <h2>🔑 Consultation de devis</h2>
+        <p style="margin-bottom: 16px; font-size: 0.85rem;">Entrez votre code de devis pour accéder à votre devis</p>
+        <div class="code-input-group">
+            <input type="text" id="devisCodeInput" class="code-input" placeholder="CODE" maxlength="8" autocomplete="off">
+            <button id="consultDevisBtn" class="btn btn-success">🔍 Consulter</button>
+        </div>
+        <p style="margin-top: 16px; font-size: 0.7rem; color: var(--text-secondary);">
+            💡 Le code vous a été fourni par votre conseiller MultiFarm
+        </p>
+        <div id="errorMessage" style="margin-top: 12px;"></div>
+    </div>
+
+    <div id="resultSection" class="result-section"></div>
+</div>
+
+<footer class="footer">
+    <p>⚡ MultiFarm - Powerleveling by GSTK © 2026 | Paiement sécurisé</p>
+</footer>
+
+<script>
+(function() {
+    // ==================== DONNÉES DE DÉMONSTRATION ====================
+    var devisList = [];
+    
+    function initDemoDevis() {
+        var demoDevis = {
+            id: 1,
+            numero: "DEV-2026-0001",
+            code: "DEMO1234",
+            date: new Date().toISOString(),
+            validite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            client: "Jean Client Démo",
+            discord: "Jean#1234",
+            pseudoJeu: "JeanLeBoss",
+            serveur: "Jahash",
+            prestations: [
+                {
+                    formule: "PL Mallefisk 50 → 200",
+                    pseudo: "JeanEude",
+                    quantite: 1,
+                    prixBase: 18000000,
+                    remise: 0,
+                    total: 18000000
+                },
+                {
+                    formule: "PL Nidas Drop Parangon",
+                    pseudo: "JeanEude",
+                    quantite: 1,
+                    prixBase: 9000000,
+                    remise: 5,
+                    total: 8550000
+                }
+            ],
+            sousTotal: 26550000,
+            remiseGlobale: 0,
+            total: 26550000,
+            acompte: 30,
+            acompteMontant: 7965000,
+            notes: "Devis de démonstration - Valable 30 jours",
+            status: "brouillon",
+            vueClient: false,
+            dateConsultation: null
+        };
+        
+        devisList = [demoDevis];
+        localStorage.setItem("multifarm_devis_list", JSON.stringify(devisList));
+    }
+    
+    function loadDevisData() {
+        try {
+            var saved = localStorage.getItem("multifarm_devis_list");
+            if (saved && saved !== "[]") {
+                devisList = JSON.parse(saved);
+                if (devisList.length === 0) {
+                    initDemoDevis();
+                }
+            } else {
+                initDemoDevis();
+            }
+        } catch (e) {
+            initDemoDevis();
+        }
+    }
+    
+    function saveDevisData() {
+        localStorage.setItem("multifarm_devis_list", JSON.stringify(devisList));
+    }
+
+    function savePaymentProof(devisCode, paymentData) {
+        var payments = JSON.parse(localStorage.getItem("multifarm_payments") || "[]");
+        payments.push({
+            id: Date.now(),
+            devisCode: devisCode,
+            ...paymentData,
+            date: new Date().toISOString(),
+            status: "en_attente"
+        });
+        localStorage.setItem("multifarm_payments", JSON.stringify(payments));
+    }
+
+    function formatMoney(v) {
+        if (v === undefined || v === null || isNaN(v)) return "0 K";
+        return v.toLocaleString("fr-FR") + " K";
+    }
+
+    function escapeHtml(s) {
+        if (!s) return "";
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function showNotification(msg, type) {
+        var n = document.createElement("div");
+        var notifClass = (type === "success") ? "notification-success" : ((type === "error") ? "notification-error" : "notification-info");
+        n.className = "notification-toast " + notifClass;
+        var icon = (type === "success") ? "✅ " : ((type === "error") ? "❌ " : "ℹ️ ");
+        n.innerHTML = icon + msg;
+        document.body.appendChild(n);
+        setTimeout(function() { n.remove(); }, 3000);
+    }
+
+    // Fonction pour revenir à la page de recherche
+    function goBackToSearch() {
+        var resultSection = document.getElementById("resultSection");
+        var searchSection = document.getElementById("searchSection");
+        resultSection.style.display = "none";
+        searchSection.style.display = "block";
+        document.getElementById("devisCodeInput").value = "";
+        window.selectedPaymentMethod = null;
+        window.uploadedFile = null;
+        window.uploadedFileName = null;
+    }
+
+    // Fonction pour exporter en PDF
+    function exportToPDF() {
+        var devisContainer = document.querySelector(".devis-container");
+        if (!devisContainer) {
+            showNotification("Aucun devis à exporter", "error");
+            return;
+        }
+        
+        // Créer une copie du contenu pour l'export
+        var originalContainer = devisContainer.cloneNode(true);
+        
+        // Supprimer le bouton de fermeture dans la copie
+        var closeBtn = originalContainer.querySelector(".close-devis-btn");
+        if (closeBtn) closeBtn.remove();
+        
+        // Supprimer la section de paiement dans la copie
+        var paymentSection = originalContainer.querySelector(".payment-section");
+        if (paymentSection) paymentSection.remove();
+        
+        // Options pour html2pdf
+        var opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: "devis_" + (window.currentDevisNumero || "document") + ".pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, letterRendering: true, useCORS: true },
+            jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+        };
+        
+        showNotification("Génération du PDF en cours...", "info");
+        
+        // Exporter en PDF
+        html2pdf().set(opt).from(originalContainer).save().then(function() {
+            showNotification("PDF exporté avec succès !", "success");
+        }).catch(function(err) {
+            console.error("Erreur PDF:", err);
+            showNotification("Erreur lors de l'export PDF", "error");
+        });
+    }
+
+    function showDevis(code) {
+        var devis = null;
+        for (var i = 0; i < devisList.length; i++) {
+            if (devisList[i].code === code) {
+                devis = devisList[i];
+                break;
+            }
+        }
+        
+        if (!devis) {
+            var errorDiv = document.getElementById("errorMessage");
+            errorDiv.innerHTML = '<div class="error-message">❌ Code de devis invalide. Vérifiez votre code.<br>Codes disponibles: ' + devisList.map(function(d) { return d.code; }).join(", ") + '</div>';
+            showNotification("Code de devis invalide", "error");
+            setTimeout(function() { errorDiv.innerHTML = ""; }, 5000);
+            return false;
+        }
+
+        // Stocker le numéro du devis pour le nom du fichier PDF
+        window.currentDevisNumero = devis.numero;
+
+        devis.vueClient = true;
+        devis.dateConsultation = new Date().toISOString();
+        saveDevisData();
+
+        var date = new Date(devis.date).toLocaleDateString("fr-FR");
+        var validite = new Date(devis.validite).toLocaleDateString("fr-FR");
+        var estExpire = new Date() > new Date(devis.validite);
+        var dejaPaye = devis.status === "paye";
+
+        var html = '<div class="devis-container">';
+        html += '<button class="close-devis-btn" id="closeDevisBtn">✖</button>';
+        html += '<div class="devis-header">';
+        html += '<h1>⚡ MULTIFARM PRO</h1>';
+        html += '<p>Powerleveling - GSTK</p>';
+        html += '</div>';
+        html += '<div class="devis-body">';
+        
+        if (estExpire) {
+            html += '<div style="text-align:center;"><div class="expired-badge">⚠️ DEVIS EXPIRE ⚠️</div></div>';
+        }
+        if (dejaPaye) {
+            html += '<div style="text-align:center;"><div class="expired-badge" style="background:#2ecc71;">✅ DEVIS PAYÉ ✅</div></div>';
+        }
+        
+        html += '<div style="text-align:center; margin-bottom:25px;">';
+        html += '<h2 style="color:#27ae60; font-size:1.3rem;">📄 DEVIS</h2>';
+        html += '<div style="display:flex; justify-content:center; gap:15px; margin-top:10px; flex-wrap:wrap;">';
+        html += '<span><strong>N°:</strong> ' + devis.numero + '</span>';
+        html += '<span><strong>Date:</strong> ' + date + '</span>';
+        html += '<span><strong>Validité:</strong> ' + validite + '</span>';
+        html += '<span><strong>Code:</strong> <span style="background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px; font-family:monospace;">' + devis.code + '</span></span>';
+        html += '</div></div>';
+        
+        html += '<div class="info-client">';
+        html += '<h3>👤 Informations client</h3>';
+        html += '<div class="info-grid">';
+        html += '<div><strong>Nom:</strong> ' + escapeHtml(devis.client) + '</div>';
+        if (devis.discord) html += '<div><strong>🎮 Discord:</strong> ' + escapeHtml(devis.discord) + '</div>';
+        if (devis.pseudoJeu) html += '<div><strong>⚔️ Pseudo en jeu:</strong> ' + escapeHtml(devis.pseudoJeu) + '</div>';
+        if (devis.serveur) html += '<div><strong>🌍 Serveur:</strong> ' + escapeHtml(devis.serveur) + '</div>';
+        html += '</div></div>';
+        
+        html += '<h3 style="color:#FFD966; margin-bottom:15px;">📋 Prestations</h3>';
+        html += '<div style="overflow-x:auto;">';
+        html += '<table class="prestations-table"><thead><tr><th>Description</th><th style="text-align:center;">Qté</th><th style="text-align:right;">Prix unit.</th><th style="text-align:right;">Remise</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
+        for (var i = 0; i < devis.prestations.length; i++) {
+            var item = devis.prestations[i];
+            html += '<tr>';
+            html += '<td>' + escapeHtml(item.formule) + '<br><small style="color:var(--text-secondary);">Personnage: ' + escapeHtml(item.pseudo || "-") + '</small></td>';
+            html += '<td style="text-align:center;">' + item.quantite + '</td>';
+            html += '<td style="text-align:right;">' + formatMoney(item.prixBase) + '</td>';
+            html += '<td style="text-align:right;">' + item.remise + '%</td>';
+            html += '<td style="text-align:right; color:#2ecc71;">' + formatMoney(item.total) + '</td>';
+            html += '</tr>';
+        }
+        html += '</tbody></table></div>';
+        
+        html += '<div class="total-box">';
+        html += '<div class="total-line"><span>Sous-total :</span><span>' + formatMoney(devis.sousTotal) + '</span></div>';
+        if (devis.remiseGlobale > 0) {
+            html += '<div class="total-line" style="color:#e74c3c;"><span>Remise globale (' + devis.remiseGlobale + '%) :</span><span>- ' + formatMoney(devis.sousTotal - devis.total) + '</span></div>';
+        }
+        html += '<div class="total-line total-final"><span>TOTAL TTC :</span><span style="color:#2ecc71;">' + formatMoney(devis.total) + '</span></div>';
+        html += '<div class="total-line" style="color:#FFD966;"><span>Acompte (' + devis.acompte + '%) :</span><span>' + formatMoney(devis.acompteMontant) + '</span></div>';
+        html += '<div class="total-line"><span>Solde :</span><span>' + formatMoney(devis.total - devis.acompteMontant) + '</span></div>';
+        html += '</div>';
+        
+        if (devis.notes) {
+            html += '<div class="notes-box" style="background:rgba(0,0,0,0.2); border-radius:12px; padding:12px; margin-bottom:20px;">';
+            html += '<h3 style="color:#FFD966; margin-bottom:8px;">📝 Notes</h3>';
+            html += '<div>' + escapeHtml(devis.notes) + '</div>';
+            html += '</div>';
+        }
+        
+        if (!estExpire && !dejaPaye) {
+            html += '<div class="payment-section">';
+            html += '<h3>💳 Paiement</h3>';
+            html += '<div class="payment-amount">À payer: <span style="color:#2ecc71;">' + formatMoney(devis.acompteMontant) + '</span></div>';
+            html += '<div class="payment-methods">';
+            html += '<div class="payment-method" data-method="kamas"><span class="icon">💰</span><span>Kamas</span></div>';
+            html += '<div class="payment-method" data-method="ogrine"><span class="icon">✨</span><span>Ogrines</span></div>';
+            
+            html += '</div>';
+            html += '<div class="upload-area" id="uploadArea">';
+            html += '<div style="font-size:1.5rem; margin-bottom:5px;">📎</div>';
+            html += '<div>Cliquez ou glissez votre preuve de paiement</div>';
+            html += '<div style="font-size:0.65rem;">PNG, JPG, PDF (max 5MB)</div>';
+            html += '</div>';
+            html += '<input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg,application/pdf" style="display: none;">';
+            html += '<div id="fileInfo" class="file-info" style="display: none;">';
+            html += '<span class="file-name" id="fileName"></span>';
+            html += '<button class="remove-file" id="removeFileBtn">🗑️ Supprimer</button>';
+            html += '</div>';
+            html += '<div style="margin-top: 15px;">';
+            html += '<textarea id="paymentNotes" rows="2" placeholder="Informations complémentaires..." style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; padding:8px;"></textarea>';
+            html += '</div></div>';
+            
+            html += '<div class="action-buttons">';
+            html += '<button id="submitPaymentBtn" class="btn btn-success">✅ Confirmer</button>';
+            html += '<button id="exportPdfBtn" class="btn btn-warning">📄 Export PDF</button>';
+            html += '</div>';
+        } else {
+            html += '<div class="action-buttons">';
+            html += '<button id="exportPdfBtn" class="btn btn-warning">📄 Export PDF</button>';
+            html += '</div>';
+        }
+        
+        html += '</div></div>';
+
+        var resultSection = document.getElementById("resultSection");
+        var searchSection = document.getElementById("searchSection");
+        
+        resultSection.innerHTML = html;
+        resultSection.style.display = "block";
+        searchSection.style.display = "none";
+
+        // Bouton fermeture
+        document.getElementById("closeDevisBtn").addEventListener("click", goBackToSearch);
+        
+        // Bouton Export PDF
+        document.getElementById("exportPdfBtn").addEventListener("click", exportToPDF);
+
+        if (!estExpire && !dejaPaye) {
+            var methods = document.querySelectorAll(".payment-method");
+            for (var i = 0; i < methods.length; i++) {
+                methods[i].addEventListener("click", function(e) {
+                    var allMethods = document.querySelectorAll(".payment-method");
+                    for (var j = 0; j < allMethods.length; j++) {
+                        allMethods[j].classList.remove("selected");
+                    }
+                    this.classList.add("selected");
+                    window.selectedPaymentMethod = this.dataset.method;
+                });
+            }
+
+            var uploadArea = document.getElementById("uploadArea");
+            var fileInput = document.getElementById("fileInput");
+            
+            uploadArea.addEventListener("click", function() { fileInput.click(); });
+            uploadArea.addEventListener("dragover", function(e) { e.preventDefault(); uploadArea.classList.add("drag-over"); });
+            uploadArea.addEventListener("dragleave", function() { uploadArea.classList.remove("drag-over"); });
+            uploadArea.addEventListener("drop", function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove("drag-over");
+                if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+            });
+            
+            fileInput.addEventListener("change", function(e) {
+                if (e.target.files[0]) handleFile(e.target.files[0]);
+            });
+            
+            document.getElementById("removeFileBtn").addEventListener("click", function() {
+                window.uploadedFile = null;
+                window.uploadedFileName = null;
+                document.getElementById("fileInfo").style.display = "none";
+                fileInput.value = "";
+            });
+            
+            document.getElementById("submitPaymentBtn").addEventListener("click", function() { submitPayment(devis); });
+        }
+
+        return true;
+    }
+    
+    var uploadedFile = null;
+    var uploadedFileName = null;
+    var selectedPaymentMethod = null;
+
+    function handleFile(file) {
+        var maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            showNotification("Fichier trop volumineux (max 5MB)", "error");
+            return;
+        }
+        var allowedTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+        var isAllowed = false;
+        for (var i = 0; i < allowedTypes.length; i++) {
+            if (file.type === allowedTypes[i]) { isAllowed = true; break; }
+        }
+        if (!isAllowed) {
+            showNotification("Format non supporté (PNG, JPG, PDF)", "error");
+            return;
+        }
+        window.uploadedFile = file;
+        window.uploadedFileName = file.name;
+        document.getElementById("fileName").innerHTML = file.name;
+        document.getElementById("fileInfo").style.display = "flex";
+        showNotification("Fichier ajouté", "success");
+    }
+
+    function submitPayment(devis) {
+        var selectedMethod = null;
+        var selectedElem = document.querySelector(".payment-method.selected");
+        if (selectedElem) {
+            selectedMethod = selectedElem.dataset.method;
+        }
+        
+        if (!selectedMethod) {
+            showNotification("Choisissez un mode de paiement", "error");
+            return;
+        }
+        if (!window.uploadedFile) {
+            showNotification("Ajoutez une preuve de paiement", "error");
+            return;
+        }
+        
+        var paymentNotes = document.getElementById("paymentNotes") ? document.getElementById("paymentNotes").value : "";
+        showNotification("Envoi en cours...", "info");
+        
+        var reader = new FileReader();
+        reader.onloadend = function() {
+            var paymentData = {
+                devisNumero: devis.numero,
+                client: devis.client,
+                discord: devis.discord,
+                pseudoJeu: devis.pseudoJeu,
+                serveur: devis.serveur,
+                montant: devis.acompteMontant,
+                methode: selectedMethod,
+                notes: paymentNotes,
+                fichier: { nom: window.uploadedFileName, type: window.uploadedFile.type, data: reader.result },
+                status: "en_attente"
+            };
+            savePaymentProof(devis.code, paymentData);
+            devis.status = "paye";
+            devis.datePaiement = new Date().toISOString();
+            saveDevisData();
+            showNotification("Paiement envoyé ! Un conseiller va valider.", "success");
+            setTimeout(function() { showDevis(devis.code); }, 1500);
+        };
+        reader.readAsDataURL(window.uploadedFile);
+    }
+
+    function checkUrlForDevisCode() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var devisCode = urlParams.get("devis");
+        if (devisCode) {
+            document.getElementById("devisCodeInput").value = devisCode;
+            setTimeout(function() { showDevis(devisCode); }, 100);
+            var newUrl = window.location.pathname;
+            window.history.pushState({}, "", newUrl);
+        }
+    }
+
+    function init() {
+        loadDevisData();
+        
+        document.getElementById("consultDevisBtn").addEventListener("click", function() {
+            var code = document.getElementById("devisCodeInput").value.trim().toUpperCase();
+            if (code) {
+                showDevis(code);
+            } else {
+                showNotification("Entrez un code", "error");
+            }
+        });
+        
+        document.getElementById("devisCodeInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                document.getElementById("consultDevisBtn").click();
+            }
+        });
+        
+        document.getElementById("goToAppBtn").addEventListener("click", function() {
+            window.location.href = "PL.html";
+        });
+        
+        var savedTheme = localStorage.getItem("multifarm_theme");
+        if (savedTheme === "light") document.body.classList.add("light-mode");
+        
+        document.getElementById("themeToggleBtn").addEventListener("click", function() {
+            document.body.classList.toggle("light-mode");
+            localStorage.setItem("multifarm_theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+        });
+        
+        checkUrlForDevisCode();
+        
+        console.log("Codes de devis disponibles:", devisList.map(function(d) { return d.code; }));
+    }
+    
+    init();
+})();
+</script>
+</body>
+</html>

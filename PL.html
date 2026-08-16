@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>MultiFarm Pro - Powerleveling Donjons</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: linear-gradient(135deg, #0a0e1a 0%, #0f172a 100%);
+            --bg-card: linear-gradient(145deg, #1a2438, #0f172a);
+            --bg-header: rgba(15, 23, 42, 0.6);
+            --bg-table: rgba(0, 0, 0, 0.35);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(255, 217, 102, 0.2);
+            --input-bg: #0f172a;
+            --input-border: #334155;
+            --card-border: rgba(255,217,102,0.2);
+            --discord-blurple: #5865F2;
+            --discord-green: #57F287;
+            --discord-red: #ED4245;
+        }
+
+        body.light-mode {
+            --bg-primary: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%);
+            --bg-card: linear-gradient(145deg, #ffffff, #f8fafc);
+            --bg-header: rgba(255, 255, 255, 0.8);
+            --bg-table: rgba(0, 0, 0, 0.05);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: rgba(100, 116, 139, 0.2);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --card-border: rgba(100, 116, 139, 0.2);
+        }
+
+        body {
+            background: var(--bg-primary);
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #3b4b6e; border-radius: 10px; }
+
+        .app-wrapper {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: var(--bg-header);
+            backdrop-filter: blur(4px);
+            padding: 12px 20px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .logo-area h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #FFD966, #FFA500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .logo-area p { font-size: 0.7rem; color: var(--text-secondary); }
+
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            border: none;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .btn-primary { background: linear-gradient(135deg, #2c5f2d, #1e3a1e); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #c0392b, #a82313); color: white; }
+        .btn-info { background: linear-gradient(135deg, #2980b9, #1f618d); color: white; }
+        .btn-purple { background: linear-gradient(135deg, #8e44ad, #6c3483); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+        .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+        .btn-theme { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; }
+        .btn-discord { background: linear-gradient(135deg, #5865F2, #4752c4); color: white; }
+        .btn-admin { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid var(--card-border);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            color: #FFD966;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .progress-section { margin-bottom: 15px; }
+        .progress-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.75rem; }
+        .progress-bar-container { background: #1e293b; border-radius: 20px; overflow: hidden; height: 25px; }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            height: 100%;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .stat-mini-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+        }
+        .stat-mini-value { font-size: 1.2rem; font-weight: bold; color: #FFD966; }
+        .stat-mini-sub { font-size: 0.6rem; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Convertisseur */
+        .converter-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 217, 102, 0.08);
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+        }
+        .converter-title {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .converter-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .converter-row input {
+            flex: 1;
+            min-width: 70px;
+            padding: 4px 6px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            text-align: center;
+            width: 80px;
+        }
+        .converter-row .arrow { font-size: 1rem; color: var(--text-secondary); }
+        .converter-row .label { font-size: 0.65rem; color: var(--text-secondary); min-width: 35px; }
+        .converter-rate {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 6px;
+            padding: 4px;
+            border-radius: 6px;
+        }
+        .converter-rate .rate-value {
+            font-weight: bold;
+            color: #FFD966;
+        }
+        .converter-rate .edit-rate-btn {
+            background: rgba(255,215,0,0.15);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 8px;
+            color: #FFD966;
+            cursor: pointer;
+            font-size: 0.6rem;
+            transition: all 0.2s;
+        }
+        .converter-rate .edit-rate-btn:hover {
+            background: rgba(255,215,0,0.25);
+        }
+
+        .filters-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            background: var(--bg-header);
+            padding: 12px 16px;
+            border-radius: 20px;
+        }
+        .filter-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            flex: 1;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        .table-wrapper {
+            background: var(--bg-table);
+            border-radius: 20px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            min-width: 800px;
+        }
+        .command-table th {
+            background: linear-gradient(135deg, #0f172a, #020617);
+            padding: 10px 6px;
+            color: #FFD966;
+            font-weight: 600;
+            text-align: left;
+        }
+        .command-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        input, select, textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            width: 100%;
+        }
+        .delete-btn, .duplicate-btn, .cart-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 0.7rem;
+        }
+        .delete-btn { background: #e74c3c; color: white; }
+        .duplicate-btn { background: #3498db; color: white; }
+        .cart-btn { background: #f39c12; color: white; }
+
+        .table-actions {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .main-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background: var(--bg-header);
+            border-top: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: center;
+            margin-top: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .footer-copyright { font-size: 0.6rem; }
+
+        .notification-toast {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 280px;
+        }
+
+        .webhook-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        .status-active { background: rgba(87, 242, 135, 0.2); color: var(--discord-green); border: 1px solid var(--discord-green); }
+        .status-inactive { background: rgba(237, 66, 69, 0.2); color: var(--discord-red); border: 1px solid var(--discord-red); }
+
+        .discord-modal, .cart-modal, .share-devis-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .discord-modal-content, .cart-modal > div, .share-devis-modal > div {
+            width: 100%;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 24px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .empty-state { text-align: center; padding: 40px; }
+        .empty-icon { font-size: 3rem; opacity: 0.6; margin-bottom: 12px; }
+
+        @media (max-width: 768px) {
+            .app-wrapper { padding: 0 12px; }
+            .header { flex-direction: column; text-align: center; padding: 10px 16px; }
+            .action-buttons { justify-content: center; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .filters-bar { flex-direction: column; }
+            .btn { padding: 5px 10px; font-size: 0.7rem; }
+            .logo-area h1 { font-size: 1.2rem; }
+            .stat-mini-value { font-size: 1rem; }
+            .converter-row { flex-wrap: wrap; justify-content: center; }
+            .table-actions { flex-direction: column; align-items: center; }
+            .table-actions .btn { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .command-table { font-size: 0.65rem; min-width: 600px; }
+            .notification-toast { max-width: 90%; right: 5%; left: 5%; top: 10px; }
+        }
+
+        @media print {
+            .header, .action-buttons, .filters-bar, .btn, .main-footer, .cart-btn, .duplicate-btn, .delete-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <div class="header">
+        <div class="logo-area">
+            <h1>⚡ MultiFarm Pro · Powerleveling</h1>
+            <p>Gestion rapide des commandes | Interface opérateur</p>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-theme" id="themeToggleBtn">🌓 Thème</button>
+            <button class="btn btn-discord" id="openDiscordConfigBtn">
+                📢 Discord
+                <span id="webhookStatusBadge" class="webhook-status status-inactive">⚫ Désactivé</span>
+            </button>
+            <button class="btn btn-admin" id="adminPanelBtn">👑 Administration</button>
+            <button class="btn btn-info" id="exportBtn">📤 Export</button>
+            <button class="btn btn-purple" id="importBtn">📥 Import</button>
+            <button class="btn btn-success" id="backupCloudBtn">☁️ Cloud</button>
+            <button class="btn btn-danger" id="resetBtn">🗑️ Reset</button>
+        </div>
+    </div>
+
+    <div id="mainInterface">
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-title">📊 Ventes par catégorie</div>
+                <canvas id="categoryChart" style="height: 160px; width: 100%;"></canvas>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-title">📈 Commandes par statut</div>
+                <canvas id="statusChart" style="height: 160px; width: 100%;"></canvas>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-title">📈 Évolution CA (7 jours)</div>
+                <canvas id="evolutionChart" style="height: 160px; width: 100%;"></canvas>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-title">🎯 Objectif journalier</div>
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>💰 Chiffre d'affaires</span>
+                        <span id="progressText">0 K / 0 K</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressFill" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+
+                <div class="stats-mini">
+                    <div class="stat-mini-item">
+                        <div class="stat-mini-value" id="todayRevenue">0 K</div>
+                        <div>Aujourd'hui</div>
+                        <div class="stat-mini-sub" id="todayRevenueEuro">0 €</div>
+                    </div>
+                    <div class="stat-mini-item">
+                        <div class="stat-mini-value" id="weeklyRevenue">0 K</div>
+                        <div>Cette semaine</div>
+                        <div class="stat-mini-sub" id="weeklyRevenueEuro">0 €</div>
+                    </div>
+                </div>
+
+                <div class="converter-section">
+                    <div class="converter-title">💱 Convertisseur Kamas / Euros</div>
+                    <div class="converter-row">
+                        <span class="label">K</span>
+                        <input type="number" id="kamasInput" placeholder="0" min="0" step="1000" value="0">
+                        <span class="arrow">↔</span>
+                        <span class="label">€</span>
+                        <input type="number" id="eurosInput" placeholder="0" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="converter-rate">
+                        <span>0.65 € = 1 000 000 K | 1 € = <span class="rate-value" id="rateDisplay">1 538 462</span> K</span>
+                        <button class="edit-rate-btn" id="editRateBtn">✏️ Modifier</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-warning" id="setGoalBtn" style="margin-top: 10px; width: 100%;">🎯 Définir objectif</button>
+            </div>
+        </div>
+
+        <div class="filters-bar">
+            <input type="text" id="searchClient" class="filter-input" placeholder="🔍 Rechercher un client...">
+            <select id="filterCategory" class="filter-input">
+                <option value="">📂 Toutes les catégories</option>
+                <option value="korriandre">🏟️ Korriandre</option>
+                <option value="enutrosor">💰 Enutrosor</option>
+                <option value="srambad">💀 Srambad</option>
+                <option value="osavora">🐉 Osavora</option>
+            </select>
+            <select id="filterStatus" class="filter-input">
+                <option value="">📌 Tous les statuts</option>
+                <option value="pending">⏳ En attente</option>
+                <option value="progress">⚙️ En cours</option>
+                <option value="completed">✅ Terminé</option>
+                <option value="delivered">📦 Livré</option>
+            </select>
+            <select id="filterPasseur" class="filter-input">
+                <option value="">👤 Tous les passeurs</option>
+            </select>
+            <select id="filterPayment" class="filter-input">
+                <option value="">💳 Tous les paiements</option>
+                <option value="unpaid">❌ Impayé</option>
+                <option value="partial">🟡 Partiel</option>
+                <option value="paid">✅ Payé</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <div id="dungeonTableContainer"></div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    <div class="footer-copyright">⚡ MultiFarm - Powerleveling by GSTK © 2026 | Version Pro 6.0</div>
+</footer>
+
+<!-- Modal Discord -->
+<div id="discordConfigModal" class="discord-modal" style="display: none;">
+    <div class="discord-modal-content" style="background:var(--bg-card); border-radius:32px; padding:32px; width:90%; max-width:650px; border:2px solid #5865F2;">
+        <div class="discord-header" style="display:flex; align-items:center; gap:15px; margin-bottom:25px; border-bottom:2px solid #5865F2; padding-bottom:15px;">
+            <div style="font-size:2.5rem;">🎮</div>
+            <div style="font-size:1.5rem; font-weight:bold; background:linear-gradient(135deg,#5865F2,#4752c4); -webkit-background-clip:text; background-clip:text; color:transparent;">Configuration Discord</div>
+        </div>
+        <div style="background:rgba(88,101,242,0.1); border-radius:20px; padding:20px; margin-bottom:20px;">
+            <label style="display:block; font-weight:600; margin-bottom:8px; color:#FFD966;">📡 URL du Webhook Discord</label>
+            <input type="text" id="webhookUrlInput" placeholder="https://discord.com/api/webhooks/..." style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px; padding:12px;">
+        </div>
+        <div style="background:rgba(88,101,242,0.1); border-radius:20px; padding:20px; margin-bottom:20px;">
+            <label style="display:block; font-weight:600; margin-bottom:8px; color:#FFD966;">🔔 Événements à notifier</label>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;">
+                <label><input type="checkbox" value="new"> 📝 Nouvelle commande</label>
+                <label><input type="checkbox" value="status"> 🔄 Changement de statut</label>
+                <label><input type="checkbox" value="payment"> 💰 Paiement reçu</label>
+                <label><input type="checkbox" value="goal"> 🎯 Objectif atteint</label>
+                <label><input type="checkbox" value="delay"> ⏰ Commande en retard</label>
+                <label><input type="checkbox" value="delete"> 🗑️ Commande supprimée</label>
+                <label><input type="checkbox" value="duplicate"> 📋 Commande dupliquée</label>
+            </div>
+        </div>
+        <div style="background:rgba(88,101,242,0.1); border-radius:20px; padding:20px; margin-bottom:20px;">
+            <label style="display:block; font-weight:600; margin-bottom:8px; color:#FFD966;">🎨 Personnalisation</label>
+            <input type="text" id="customMessagePrefix" placeholder="Préfixe personnalisé" style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px; padding:12px;">
+        </div>
+        <div id="testResult" style="margin-top:15px; padding:12px; border-radius:12px; display:none;"></div>
+        <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px;">
+            <button id="testWebhookBtn" class="btn btn-info">🧪 Tester</button>
+            <button id="saveWebhookBtn" class="btn btn-success">💾 Sauvegarder</button>
+            <button id="closeDiscordModal" class="btn btn-danger">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ==================== DONNÉES PRINCIPALES ====================
+    var dungeonPassages = [];
+    var nextId = 1;
+    var dailyGoal = 100000000;
+    var charts = {};
+    var passeurs = ['GSTK', 'MultiFarm', 'SpeedRun', 'XPBoost'];
+    var passeursAdmin = [
+        { id: 1, name: 'GSTK', status: 'active', commands: 0, revenue: 0 },
+        { id: 2, name: 'MultiFarm', status: 'active', commands: 0, revenue: 0 },
+        { id: 3, name: 'SpeedRun', status: 'active', commands: 0, revenue: 0 },
+        { id: 4, name: 'XPBoost', status: 'vacation', commands: 0, revenue: 0 }
+    ];
+    var clients = [];
+    
+    var webhookUrl = '';
+    var notificationEvents = ['new', 'status', 'payment', 'goal', 'delay'];
+    var customMessagePrefix = '';
+
+    var cartItems = [];
+    var devisList = [];
+    var nextDevisId = 1;
+    var cartModal = null;
+
+    // ==================== TAUX DE CONVERSION ====================
+    // 0.65 € = 1 000 000 K => 1 € = 1 538 461.538 K
+    var conversionRate = 1538461.54;
+
+    function loadConversionRate() {
+        try {
+            var saved = localStorage.getItem('multifarm_conversion_rate');
+            if (saved) {
+                var rate = parseFloat(saved);
+                if (!isNaN(rate) && rate > 0) conversionRate = rate;
+            }
+        } catch(e) {}
+        updateRateDisplay();
+    }
+
+    function saveConversionRate() {
+        var newRate = prompt('Entrez le nouveau taux (1 € = ? K) :\n(Actuellement: ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K)', Math.round(conversionRate));
+        if (newRate !== null) {
+            var rate = parseFloat(newRate.replace(/\s/g, ''));
+            if (!isNaN(rate) && rate > 0) {
+                conversionRate = rate;
+                localStorage.setItem('multifarm_conversion_rate', conversionRate);
+                updateRateDisplay();
+                updateAllConversions();
+                showNotification('Taux mis à jour: 1 € = ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K', 'success');
+            } else {
+                showNotification('Veuillez entrer un nombre valide', 'warning');
+            }
+        }
+    }
+
+    function updateRateDisplay() {
+        var display = document.getElementById('rateDisplay');
+        if (display) display.innerHTML = Math.round(conversionRate).toLocaleString('fr-FR');
+    }
+
+    function kamasToEuros(kamas) { return kamas / conversionRate; }
+    function eurosToKamas(euros) { return euros * conversionRate; }
+
+    function updateAllConversions() {
+        updateConverterFields();
+        updateRevenueDisplay();
+    }
+
+    function updateConverterFields() {
+        var kamasInput = document.getElementById('kamasInput');
+        var eurosInput = document.getElementById('eurosInput');
+        if (!kamasInput || !eurosInput) return;
+        var kamas = parseFloat(kamasInput.value) || 0;
+        eurosInput.value = (kamas / conversionRate).toFixed(2);
+    }
+
+    function updateRevenueDisplay() {
+        var today = getTodayRevenue();
+        var weekly = getWeeklyRevenue();
+        var todayEl = document.getElementById('todayRevenue');
+        var weeklyEl = document.getElementById('weeklyRevenue');
+        var todayEuro = document.getElementById('todayRevenueEuro');
+        var weeklyEuro = document.getElementById('weeklyRevenueEuro');
+        if (todayEl) todayEl.innerHTML = formatMoney(today);
+        if (weeklyEl) weeklyEl.innerHTML = formatMoney(weekly);
+        if (todayEuro) todayEuro.innerHTML = kamasToEuros(today).toFixed(2) + ' €';
+        if (weeklyEuro) weeklyEuro.innerHTML = kamasToEuros(weekly).toFixed(2) + ' €';
+    }
+
+    // ==================== CONSTANTES ====================
+    var STATUSES = [
+        { id: 'pending', name: 'En attente', icon: '⏳', color: '#f39c12' },
+        { id: 'progress', name: 'En cours', icon: '⚙️', color: '#3498db' },
+        { id: 'completed', name: 'Terminé', icon: '✅', color: '#2ecc71' },
+        { id: 'delivered', name: 'Livré', icon: '📦', color: '#9b59b6' }
+    ];
+
+    var CATEGORIES = [
+        { id: 'korriandre', name: 'Korriandre', icon: '🏟️' },
+        { id: 'enutrosor', name: 'Enutrosor', icon: '💰' },
+        { id: 'srambad', name: 'Srambad', icon: '💀' },
+        { id: 'osavora', name: 'Osavora', icon: '🐉' }
+    ];
+
+    var SOUS_CATEGORIES = {   
+        'korriandre': [ { id: 'korriandre', name: 'Korriandre', icon: '🏟️' } ],
+        'enutrosor': [
+            { id: 'mallefisk', name: 'Malléfisk', icon: '💰' },
+            { id: 'phossile', name: 'Phossile', icon: '🐗' },
+            { id: 'nidas', name: 'Nidas', icon: '👑' }
+        ],
+        'srambad': [
+            { id: 'toxoliath', name: 'Toxoliath', icon: '🧪' },
+            { id: 'rdv', name: 'Reine des voleurs', icon: '💀' }
+        ],
+        'osavora': [ { id: 'venerable', name: 'Vénérable', icon: '🧧' } ]
+    };
+
+    var FORMULES_PAR_SOUS_CATEGORIE = {
+        'korriandre': [{ id: 'korriandre_1_50', name: 'PL Korriandre (Capture)', icon: '🏟️', prix: 80000 }],
+        'mallefisk': [
+            { id: 'mallefisk_combat', name: 'PL Mallefisk par combat', icon: '💰', prix: 0 },
+            { id: 'mallefisk_50_199', name: 'PL Mallefisk 50→199', icon: '💰', prix: 0 },
+            { id: 'mallefisk_50_200', name: 'PL Mallefisk 50→200', icon: '💰', prix: 0 },
+            { id: 'mallefisk_150_200', name: 'PL Mallefisk 150→200', icon: '💰', prix: 0 },
+            { id: 'mallefisk_199_200', name: 'PL Mallefisk 199→200', icon: '💰', prix: 0 },
+            { id: 'mallefisk_team4', name: 'PL Mallefisk Team 4', icon: '💰', prix: 0 }
+        ],
+        'phossile': [
+            { id: 'phossile_combat', name: 'PL Phossile par combat', icon: '🐗', prix: 100000 },
+            { id: 'phossile_50_199', name: 'PL Phossile 50→199', icon: '🐗', prix: 14000000 },
+            { id: 'phossile_50_200', name: 'PL Phossile 50→200', icon: '🐗', prix: 18000000 }
+        ],
+        'nidas': [
+            { id: 'nidas_combat', name: 'PL Nidas par combat', icon: '👑', prix: 300000 },
+            { id: 'nidas_50_199', name: 'PL Nidas 50→199', icon: '👑', prix: 14000000 },
+            { id: 'nidas_50_200', name: 'PL Nidas 50→200', icon: '👑', prix: 18000000 },
+            { id: 'nidas_150_199', name: 'PL Nidas 150→199', icon: '👑', prix: 10000000 },
+            { id: 'nidas_150_200', name: 'PL Nidas 150→200', icon: '👑', prix: 12000000 },
+            { id: 'nidas_drop', name: 'PL Nidas Drop Parangon', icon: '👑', prix: 9000000 }
+        ],
+        'toxoliath': [
+            { id: 'toxoliath_combat', name: 'PL Toxoliath par combat', icon: '🧪', prix: 300000 },
+            { id: 'toxoliath_50_199', name: 'PL Toxoliath 50→199', icon: '🧪', prix: 14000000 }
+        ],
+        'rdv': [
+            { id: 'rdv_combat', name: 'PL RdV par combat', icon: '💀', prix: 300000 },
+            { id: 'rdv_50_199', name: 'PL RdV 50→199', icon: '💀', prix: 14000000 },
+            { id: 'rdv_drop', name: 'PL RdV Drop Parangon', icon: '💀', prix: 9000000 }
+        ],
+        'venerable': [
+            { id: 'venerable_combat', name: 'PL Vénérable par combat', icon: '🧧', prix: 250000 },
+            { id: 'venerable_50_199', name: 'PL Vénérable 50→199', icon: '🧧', prix: 14000000 }
+        ]
+    };
+
+    // ==================== FONCTIONS UTILITAIRES ====================
+    function formatMoney(v) { 
+        if (v === undefined || v === null || isNaN(v)) return '0 K';
+        return v.toLocaleString('fr-FR') + ' K'; 
+    }
+    function getSousCategoriesForCategorie(c) { return SOUS_CATEGORIES[c] || []; }
+    function getFormulesForSousCategorie(s) { return FORMULES_PAR_SOUS_CATEGORIE[s] || []; }
+    function getPrixBase(i) { var f = getFormulesForSousCategorie(i.sousCategorie).find(function(f) { return f.id === i.formule; }); return f ? f.prix : 0; }
+    function calculateTotal(i) { return Math.round(getPrixBase(i) * (i.persoQty||1) * (100 - (i.remise||0)) / 100); }
+    function getTotalPrice() { var sum = 0; for (var i = 0; i < dungeonPassages.length; i++) { sum += calculateTotal(dungeonPassages[i]); } return sum; }
+    function getTodayRevenue() { var today = new Date().toDateString(); var sum = 0; for (var i = 0; i < dungeonPassages.length; i++) { var p = dungeonPassages[i]; if (p.date && new Date(p.date).toDateString() === today) { sum += calculateTotal(p); } } return sum; }
+    function getWeeklyRevenue() { var weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); var sum = 0; for (var i = 0; i < dungeonPassages.length; i++) { var p = dungeonPassages[i]; if (p.date && new Date(p.date) >= weekAgo) { sum += calculateTotal(p); } } return sum; }
+
+    function showNotification(msg, type) {
+        var n = document.createElement('div');
+        var notifClass = (type === 'success') ? 'notification-success' : ((type === 'warning') ? 'notification-warning' : 'notification-info');
+        n.className = 'notification-toast ' + notifClass;
+        var icon = (type === 'success') ? '✅ ' : ((type === 'warning') ? '⚠️ ' : 'ℹ️ ');
+        n.innerHTML = icon + msg;
+        document.body.appendChild(n);
+        setTimeout(function() { n.remove(); }, 3000);
+    }
+
+    // ==================== SAUVEGARDE / CHARGEMENT ====================
+    function saveData() {
+        localStorage.setItem('multifarm_pro_data', JSON.stringify(dungeonPassages));
+        localStorage.setItem('multifarm_daily_goal', dailyGoal);
+        localStorage.setItem('multifarm_passeurs_admin', JSON.stringify(passeursAdmin));
+        localStorage.setItem('multifarm_clients_data', JSON.stringify(clients));
+        localStorage.setItem('multifarm_webhook', webhookUrl);
+        localStorage.setItem('multifarm_notif_events', JSON.stringify(notificationEvents));
+        localStorage.setItem('multifarm_custom_prefix', customMessagePrefix);
+        localStorage.setItem('multifarm_devis_list', JSON.stringify(devisList));
+    }
+
+    function loadData() {
+        try {
+            var saved = localStorage.getItem('multifarm_pro_data');
+            if(saved) { dungeonPassages = JSON.parse(saved); if(dungeonPassages.length) nextId = Math.max(...dungeonPassages.map(p=>p.id)) + 1; }
+            var savedGoal = localStorage.getItem('multifarm_daily_goal');
+            if(savedGoal) dailyGoal = parseInt(savedGoal);
+            var savedPasseurs = localStorage.getItem('multifarm_passeurs_admin');
+            if(savedPasseurs) { var p=JSON.parse(savedPasseurs); if(p.length) passeursAdmin=p; }
+            var savedClients = localStorage.getItem('multifarm_clients_data');
+            if(savedClients) clients = JSON.parse(savedClients);
+            var savedWebhook = localStorage.getItem('multifarm_webhook');
+            if(savedWebhook) webhookUrl = savedWebhook;
+            var savedEvents = localStorage.getItem('multifarm_notif_events');
+            if(savedEvents) notificationEvents = JSON.parse(savedEvents);
+            var savedPrefix = localStorage.getItem('multifarm_custom_prefix');
+            if(savedPrefix) customMessagePrefix = savedPrefix;
+            var savedDevis = localStorage.getItem('multifarm_devis_list');
+            if(savedDevis) { devisList = JSON.parse(savedDevis); if(devisList.length) nextDevisId = Math.max(...devisList.map(d=>d.id)) + 1; }
+            
+            passeurs = passeursAdmin.filter(p => p.status === 'active').map(p => p.name);
+            if(passeurs.length === 0) passeurs = ['GSTK'];
+            
+            dungeonPassages.forEach(function(p) {
+                if(!p.status) p.status='pending';
+                if(!p.passeur) p.passeur=passeurs[0]||'GSTK';
+                if(!p.date) p.date=new Date().toISOString();
+                if(!p.note) p.note='';
+                if(!p.paymentStatus) p.paymentStatus='unpaid';
+                if(!p.paymentAmount) p.paymentAmount=0;
+                if(!p.categorie) p.categorie='enutrosor';
+                var sc=getSousCategoriesForCategorie(p.categorie);
+                if(sc.length && !p.sousCategorie) p.sousCategorie=sc[0].id;
+                if(!p.formule) { var fl=getFormulesForSousCategorie(p.sousCategorie); if(fl.length) p.formule=fl[0].id; }
+                if(p.remise===undefined) p.remise=0;
+                if(!p.persoQty) p.persoQty=1;
+            });
+            updatePasseurStats();
+            updateClientStats();
+            updateWebhookStatusBadge();
+        } catch(e) { dungeonPassages = []; }
+    }
+
+    function updateWebhookStatusBadge() {
+        var badge = document.getElementById('webhookStatusBadge');
+        if(webhookUrl && webhookUrl.startsWith('https://discord.com/api/webhooks/')) {
+            badge.innerHTML = '✅ Activé';
+            badge.className = 'webhook-status status-active';
+        } else {
+            badge.innerHTML = '⚫ Désactivé';
+            badge.className = 'webhook-status status-inactive';
+        }
+    }
+
+    function updatePasseurStats() {
+        passeursAdmin.forEach(function(p) { p.commands = 0; p.revenue = 0; });
+        dungeonPassages.forEach(function(cmd) {
+            var p = passeursAdmin.find(function(p) { return p.name === cmd.passeur; });
+            if(p) { p.commands++; p.revenue += calculateTotal(cmd); }
+        });
+    }
+
+    function updateClientStats() {
+        var map = {};
+        dungeonPassages.forEach(function(cmd) {
+            if(cmd.pseudo && cmd.pseudo.trim()) {
+                if(!map[cmd.pseudo]) {
+                    map[cmd.pseudo] = { name: cmd.pseudo, commands: 0, total: 0, lastDate: cmd.date, contact: '', notes: '' };
+                }
+                var c = map[cmd.pseudo];
+                c.commands++;
+                c.total += calculateTotal(cmd);
+                if(cmd.date && new Date(cmd.date) > new Date(c.lastDate)) c.lastDate = cmd.date;
+            }
+        });
+        clients = [];
+        for (var k in map) clients.push(map[k]);
+        var saved = localStorage.getItem('multifarm_clients_data');
+        if(saved) {
+            try {
+                var savedClients = JSON.parse(saved);
+                clients.forEach(function(c) {
+                    var existing = savedClients.find(function(s) { return s.name === c.name; });
+                    if(existing) { c.contact = existing.contact; c.notes = existing.notes; }
+                });
+            } catch(e) {}
+        }
+    }
+
+    // ==================== GRAPHIQUES ====================
+    function updateCharts() {
+        var catStats = {}, statusStats = { pending:0,progress:0,completed:0,delivered:0 };
+        dungeonPassages.forEach(function(p) {
+            catStats[p.categorie] = (catStats[p.categorie]||0) + calculateTotal(p);
+            if(statusStats[p.status]!==undefined) statusStats[p.status] += calculateTotal(p);
+        });
+        var evoData = [];
+        for(var i=6;i>=0;i--) {
+            var d=new Date(); d.setDate(d.getDate()-i);
+            var dayStart=new Date(d); dayStart.setHours(0,0,0,0);
+            var dayEnd=new Date(d); dayEnd.setHours(23,59,59,999);
+            var sum = 0;
+            for(var j=0;j<dungeonPassages.length;j++) {
+                var p=dungeonPassages[j];
+                if(p.date && new Date(p.date) >= dayStart && new Date(p.date) <= dayEnd) sum += calculateTotal(p);
+            }
+            evoData.push(sum);
+        }
+        var days = [];
+        for(var i=6;i>=0;i--) { var d=new Date(); d.setDate(d.getDate()-i); days.push(d.toLocaleDateString('fr-FR',{weekday:'short'})); }
+        var textColor = document.body.classList.contains('light-mode') ? '#1e293b' : 'white';
+        
+        if(charts.categoryChart) charts.categoryChart.destroy();
+        if(charts.statusChart) charts.statusChart.destroy();
+        if(charts.evolutionChart) charts.evolutionChart.destroy();
+        
+        charts.categoryChart = new Chart(document.getElementById('categoryChart'), { type:'doughnut', data:{ labels:Object.keys(catStats).map(function(k){ return CATEGORIES.find(function(c){ return c.id === k; })?.name || k; }), datasets:[{ data:Object.values(catStats), backgroundColor:['#FFD966','#2ecc71','#e74c3c','#3498db'] }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:'bottom', labels:{ color:textColor } }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.label + ': ' + formatMoney(ctx.raw); } } } } } });
+        charts.statusChart = new Chart(document.getElementById('statusChart'), { type:'bar', data:{ labels:STATUSES.map(function(s){ return s.name; }), datasets:[{ label:'Montant', data:STATUSES.map(function(s){ return statusStats[s.id]; }), backgroundColor:STATUSES.map(function(s){ return s.color; }) }] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ ticks:{ color:textColor, callback:function(v){ return formatMoney(v); } }, title:{ display:true, text:'Montant', color:textColor } }, x:{ ticks:{ color:textColor } } }, plugins:{ legend:{ labels:{ color:textColor } }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label + ': ' + formatMoney(ctx.raw); } } } } } });
+        charts.evolutionChart = new Chart(document.getElementById('evolutionChart'), { type:'line', data:{ labels:days, datasets:[{ label:'CA', data:evoData, borderColor:'#FFD966', backgroundColor:'rgba(255,217,102,0.1)', fill:true, tension:0.4 }] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ ticks:{ callback:function(v){ return formatMoney(v); }, color:textColor }, title:{ display:true, text:'Montant', color:textColor } }, x:{ ticks:{ color:textColor } } }, plugins:{ legend:{ labels:{ color:textColor } }, tooltip:{ callbacks:{ label:function(ctx){ return formatMoney(ctx.raw); } } } } } });
+    }
+
+    function updateProgress() {
+        var total = getTotalPrice();
+        var percent = Math.min((total / dailyGoal) * 100, 100);
+        var progressFill = document.getElementById('progressFill');
+        if(progressFill) {
+            progressFill.style.width = percent + '%';
+            progressFill.innerHTML = Math.round(percent) + '%';
+        }
+        var progressText = document.getElementById('progressText');
+        if(progressText) progressText.innerHTML = formatMoney(total) + ' / ' + formatMoney(dailyGoal);
+        updateRevenueDisplay();
+        if(total >= dailyGoal && !window.goalNotified) {
+            window.goalNotified = true;
+            showNotification('🎉 Objectif atteint : ' + formatMoney(total), 'success');
+            if(notificationEvents.indexOf('goal') !== -1) {
+                fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '🎯 Objectif atteint !', description: 'Chiffre d\'affaires: ' + formatMoney(total), color: 0x00ff00, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+            }
+        } else if(total < dailyGoal) {
+            window.goalNotified = false;
+        }
+    }
+
+    function updateFilterOptions() {
+        var catSelect = document.getElementById('filterCategory');
+        var statusSelect = document.getElementById('filterStatus');
+        var passeurSelect = document.getElementById('filterPasseur');
+        if(catSelect) catSelect.innerHTML = '<option value="">📂 Toutes les catégories</option>' + CATEGORIES.map(function(c){ return '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>'; }).join('');
+        if(statusSelect) statusSelect.innerHTML = '<option value="">📌 Tous les statuts</option>' + STATUSES.map(function(s){ return '<option value="' + s.id + '">' + s.icon + ' ' + s.name + '</option>'; }).join('');
+        var uniquePasseurs = [];
+        var allPasseurs = passeurs.concat(dungeonPassages.map(function(p){ return p.passeur; }).filter(function(p){ return p; }));
+        for(var i=0;i<allPasseurs.length;i++) {
+            if(uniquePasseurs.indexOf(allPasseurs[i]) === -1) uniquePasseurs.push(allPasseurs[i]);
+        }
+        if(passeurSelect) passeurSelect.innerHTML = '<option value="">👤 Tous les passeurs</option>' + uniquePasseurs.map(function(p){ return '<option value="' + escapeHtml(p) + '">👤 ' + escapeHtml(p) + '</option>'; }).join('');
+    }
+
+    function getFilteredCommands() {
+        var search = document.getElementById('searchClient') ? document.getElementById('searchClient').value.toLowerCase() : '';
+        var category = document.getElementById('filterCategory') ? document.getElementById('filterCategory').value : '';
+        var status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
+        var passeur = document.getElementById('filterPasseur') ? document.getElementById('filterPasseur').value : '';
+        var payment = document.getElementById('filterPayment') ? document.getElementById('filterPayment').value : '';
+        return dungeonPassages.filter(function(p){
+            if(search && p.pseudo && p.pseudo.toLowerCase().indexOf(search) === -1) return false;
+            if(category && p.categorie !== category) return false;
+            if(status && p.status !== status) return false;
+            if(passeur && p.passeur !== passeur) return false;
+            if(payment && p.paymentStatus !== payment) return false;
+            return true;
+        });
+    }
+
+    function escapeHtml(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ==================== RENDU DU TABLEAU ====================
+    function renderTable() {
+        var container = document.getElementById('dungeonTableContainer');
+        if(!container) return;
+        var filtered = getFilteredCommands();
+        if(filtered.length === 0){
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune commande trouvée</p><button onclick="window.addDungeonRow?.()" class="btn btn-primary">➕ Ajouter une commande</button></div>';
+            return;
+        }
+        var html = '<table class="command-table"><thead><tr>';
+        html += '<th>👤 Client</th><th>👥 Qté</th><th>🌍 Donjon</th><th>📜 Formule</th><th>📌 Statut</th><th>👤 Passeur</th><th>💳 Paiement</th><th>🏷️ Remise</th><th>💰 Total</th><th>📝 Note</th><th>🎮 Actions</th>';
+        html += '</thead><tbody>';
+        filtered.forEach(function(item){
+            var total = calculateTotal(item);
+            var prixBase = getPrixBase(item);
+            html += '<tr>';
+            html += '<td><input type="text" class="field-pseudo" data-id="' + item.id + '" value="' + escapeHtml(item.pseudo) + '" placeholder="Client"></td>';
+            html += '<td><input type="number" class="field-qty" data-id="' + item.id + '" value="' + item.persoQty + '" min="1" style="width:70px"></td>';
+            html += '<td><select class="field-cat" data-id="' + item.id + '">' + CATEGORIES.map(function(c){ return '<option value="' + c.id + '" ' + (item.categorie === c.id ? 'selected' : '') + '>' + c.icon + ' ' + c.name + '</option>'; }).join('') + '</select><select class="field-sub" data-id="' + item.id + '" style="margin-top:4px;">' + getSousCategoriesForCategorie(item.categorie).map(function(sc){ return '<option value="' + sc.id + '" ' + (item.sousCategorie === sc.id ? 'selected' : '') + '>' + sc.icon + ' ' + sc.name + '</option>'; }).join('') + '</select></td>';
+            html += '<td><select class="field-formule" data-id="' + item.id + '">' + getFormulesForSousCategorie(item.sousCategorie).map(function(f){ return '<option value="' + f.id + '" ' + (item.formule === f.id ? 'selected' : '') + '>' + f.icon + ' ' + f.name + '</option>'; }).join('') + '</select><div style="font-size:10px;">Base: ' + formatMoney(prixBase) + '</div></td>';
+            html += '<td><select class="field-status" data-id="' + item.id + '">' + STATUSES.map(function(s){ return '<option value="' + s.id + '" ' + (item.status === s.id ? 'selected' : '') + '>' + s.icon + ' ' + s.name + '</option>'; }).join('') + '</select></td>';
+            html += '<td><select class="field-passeur" data-id="' + item.id + '">' + passeurs.map(function(p){ return '<option value="' + escapeHtml(p) + '" ' + (item.passeur === p ? 'selected' : '') + '>👤 ' + escapeHtml(p) + '</option>'; }).join('') + '</select></td>';
+            html += '<td><select class="field-payment" data-id="' + item.id + '"><option value="unpaid" ' + (item.paymentStatus === 'unpaid' ? 'selected' : '') + '>❌ Impayé</option><option value="partial" ' + (item.paymentStatus === 'partial' ? 'selected' : '') + '>🟡 Partiel</option><option value="paid" ' + (item.paymentStatus === 'paid' ? 'selected' : '') + '>✅ Payé</option></select><input type="number" class="field-payment-amount" data-id="' + item.id + '" value="' + (item.paymentAmount||0) + '" placeholder="Montant" style="width:70px; margin-top:4px;"></td>';
+            html += '<td><input type="number" class="field-remise" data-id="' + item.id + '" value="' + (item.remise||0) + '" min="0" max="100" style="width:50px;"> %</td>';
+            html += '<td><strong style="color:#2ecc71;">' + formatMoney(total) + '</strong></td>';
+            html += '<td><textarea class="field-note" data-id="' + item.id + '" rows="1" style="width:80px;" placeholder="Note...">' + escapeHtml(item.note||'') + '</textarea></td>';
+            html += '<td><button class="duplicate-btn" data-id="' + item.id + '">📋</button><button class="delete-btn" data-id="' + item.id + '">🗑️</button><button class="cart-btn" data-id="' + item.id + '">🛒</button></td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div class="table-actions"><button id="addCommandBtn" class="btn btn-primary">➕ Nouvelle commande</button><button id="openCartBtn" class="btn btn-warning">🛒 Panier (' + cartItems.length + ')</button></div>';
+        container.innerHTML = html;
+        attachEvents();
+    }
+
+    function attachEvents() {
+        document.querySelectorAll('.field-pseudo, .field-qty, .field-remise, .field-note, .field-payment-amount').forEach(function(el){ el.addEventListener('change', handleFieldChange); });
+        document.querySelectorAll('.field-cat').forEach(function(el){ el.addEventListener('change', handleCatChange); });
+        document.querySelectorAll('.field-sub').forEach(function(el){ el.addEventListener('change', handleSubChange); });
+        document.querySelectorAll('.field-formule').forEach(function(el){ el.addEventListener('change', handleFormuleChange); });
+        document.querySelectorAll('.field-status').forEach(function(el){ el.addEventListener('change', handleStatusChange); });
+        document.querySelectorAll('.field-passeur').forEach(function(el){ el.addEventListener('change', handlePasseurChange); });
+        document.querySelectorAll('.field-payment').forEach(function(el){ el.addEventListener('change', handlePaymentChange); });
+        document.querySelectorAll('.delete-btn').forEach(function(btn){ btn.addEventListener('click', function(){ deleteRow(parseInt(btn.dataset.id)); }); });
+        document.querySelectorAll('.duplicate-btn').forEach(function(btn){ btn.addEventListener('click', function(){ duplicateRow(parseInt(btn.dataset.id)); }); });
+        document.querySelectorAll('.cart-btn').forEach(function(btn){ btn.addEventListener('click', function(){ addToCart(parseInt(btn.dataset.id)); }); });
+        var addBtn = document.getElementById('addCommandBtn');
+        if(addBtn) addBtn.addEventListener('click', addDungeonRow);
+        var cartBtn = document.getElementById('openCartBtn');
+        if(cartBtn) cartBtn.addEventListener('click', openCart);
+    }
+
+    function handleFieldChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(!item) return;
+        if(e.target.classList.contains('field-pseudo')) item.pseudo = e.target.value;
+        else if(e.target.classList.contains('field-qty')) item.persoQty = Math.max(1, parseInt(e.target.value) || 1);
+        else if(e.target.classList.contains('field-remise')) item.remise = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+        else if(e.target.classList.contains('field-note')) item.note = e.target.value;
+        else if(e.target.classList.contains('field-payment-amount')) item.paymentAmount = parseInt(e.target.value) || 0;
+        saveData();
+        renderTable();
+        updateProgress();
+        updateCharts();
+    }
+
+    function handleCatChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(!item) return;
+        item.categorie = e.target.value;
+        var ns = getSousCategoriesForCategorie(item.categorie);
+        if(ns.length) item.sousCategorie = ns[0].id;
+        var nf = getFormulesForSousCategorie(item.sousCategorie);
+        if(nf.length) item.formule = nf[0].id;
+        saveData();
+        renderTable();
+        updateProgress();
+        updateCharts();
+    }
+
+    function handleSubChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(!item) return;
+        item.sousCategorie = e.target.value;
+        var nf = getFormulesForSousCategorie(item.sousCategorie);
+        if(nf.length) item.formule = nf[0].id;
+        saveData();
+        renderTable();
+        updateProgress();
+        updateCharts();
+    }
+
+    function handleFormuleChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(item){ item.formule = e.target.value; saveData(); renderTable(); updateProgress(); updateCharts(); }
+    }
+
+    function handleStatusChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(item){ 
+            var old = item.status;
+            item.status = e.target.value;
+            saveData();
+            renderTable();
+            updateCharts();
+            showNotification('Statut: ' + old + ' → ' + item.status, 'info');
+            if(notificationEvents.indexOf('status') !== -1) {
+                fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '📌 Changement de statut', description: 'Commande **' + (item.pseudo||'sans nom') + '**\n' + old + ' → ' + item.status, color: 0x3498db, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+            }
+        }
+    }
+
+    function handlePasseurChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(item){ item.passeur = e.target.value; saveData(); renderTable(); }
+    }
+
+    function handlePaymentChange(e) {
+        var id = parseInt(e.target.dataset.id);
+        var item = dungeonPassages.find(function(p){ return p.id === id; });
+        if(item){ 
+            item.paymentStatus = e.target.value;
+            saveData();
+            renderTable();
+            if(notificationEvents.indexOf('payment') !== -1) {
+                fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '💰 Mise à jour paiement', description: 'Commande **' + (item.pseudo||'sans nom') + '**\nStatut: ' + (item.paymentStatus === 'paid' ? '✅ Payé' : item.paymentStatus === 'partial' ? '🟡 Paiement partiel' : '❌ En attente'), color: 0xffa500, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+            }
+        }
+    }
+
+    function deleteRow(id) {
+        if(confirm('Supprimer cette commande ?')){
+            var item = dungeonPassages.find(function(p){ return p.id === id; });
+            dungeonPassages = dungeonPassages.filter(function(p){ return p.id !== id; });
+            saveData();
+            renderTable();
+            updateProgress();
+            updateCharts();
+            showNotification('Commande supprimée', 'info');
+            if(notificationEvents.indexOf('delete') !== -1) {
+                fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '🗑️ Commande supprimée', description: 'Commande **' + (item?.pseudo||'inconnue') + '** a été supprimée', color: 0xed4245, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+            }
+        }
+    }
+
+    function duplicateRow(id) {
+        var original = dungeonPassages.find(function(p){ return p.id === id; });
+        if(original){
+            var newCmd = JSON.parse(JSON.stringify(original));
+            newCmd.id = nextId++;
+            newCmd.pseudo = original.pseudo + ' (copie)';
+            newCmd.date = new Date().toISOString();
+            dungeonPassages.push(newCmd);
+            saveData();
+            renderTable();
+            updateProgress();
+            updateCharts();
+            showNotification('Commande dupliquée', 'success');
+            if(notificationEvents.indexOf('duplicate') !== -1) {
+                fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '📋 Commande dupliquée', description: '**' + original.pseudo + '** a été dupliquée', color: 0x57f287, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+            }
+        }
+    }
+
+    function addDungeonRow() {
+        var dc = 'enutrosor';
+        var sc = getSousCategoriesForCategorie(dc);
+        var ds = sc.length ? sc[0].id : 'mallefisk';
+        var f = getFormulesForSousCategorie(ds);
+        dungeonPassages.push({
+            id: nextId++,
+            pseudo: '',
+            persoQty: 1,
+            categorie: dc,
+            sousCategorie: ds,
+            formule: f.length ? f[0].id : '',
+            remise: 0,
+            status: 'pending',
+            passeur: passeurs[0] || 'GSTK',
+            date: new Date().toISOString(),
+            note: '',
+            paymentStatus: 'unpaid',
+            paymentAmount: 0,
+            estimatedDate: ''
+        });
+        saveData();
+        renderTable();
+        updateProgress();
+        updateCharts();
+        showNotification('Nouvelle commande ajoutée', 'success');
+        if(notificationEvents.indexOf('new') !== -1) {
+            fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '📝 Nouvelle commande', description: 'Ajoutée le ' + new Date().toLocaleDateString(), color: 0x00ff00, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+        }
+    }
+
+    // ==================== SYSTÈME DE DEVIS ====================
+    function updateCartBadge() {
+        var cartBtn = document.getElementById('openCartBtn');
+        if (cartBtn) {
+            if (cartItems.length > 0) {
+                cartBtn.innerHTML = '🛒 Panier (' + cartItems.length + ')';
+                cartBtn.style.background = 'linear-gradient(135deg, #e67e22, #d35400)';
+            } else {
+                cartBtn.innerHTML = '🛒 Panier (0)';
+                cartBtn.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+            }
+        }
+    }
+
+    function addToCart(idCommande) {
+        var commande = dungeonPassages.find(function(p){ return p.id === idCommande; });
+        if (!commande) return;
+        var existing = cartItems.find(function(item){ return item.id === idCommande; });
+        if (existing) {
+            showNotification('Cette commande est déjà dans le panier', 'warning');
+            return;
+        }
+        cartItems.push({
+            id: commande.id,
+            pseudo: commande.pseudo,
+            formule: commande.formule,
+            categorie: commande.categorie,
+            quantite: commande.persoQty || 1,
+            prixBase: getPrixBase(commande),
+            remise: commande.remise || 0,
+            total: calculateTotal(commande)
+        });
+        showNotification((commande.pseudo || 'Client') + ' ajouté au panier', 'success');
+        updateCartBadge();
+    }
+
+    function removeFromCart(index) {
+        cartItems.splice(index, 1);
+        showNotification('Article retiré du panier', 'info');
+        updateCartBadge();
+        if (cartModal && cartModal.style.display === 'flex') {
+            renderCartModal();
+        }
+    }
+
+    function generateUniqueCode() {
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        var code = '';
+        for (var i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    function generateDevisFromCart(modal) {
+        if (cartItems.length === 0) {
+            showNotification('Le panier est vide', 'warning');
+            return;
+        }
+        var clientName = document.getElementById('devisClientName')?.value.trim() || 'Client non spécifié';
+        var clientDiscord = document.getElementById('devisClientDiscord')?.value.trim() || '';
+        var clientPseudo = document.getElementById('devisClientPseudo')?.value.trim() || '';
+        var clientServeur = document.getElementById('devisClientServeur')?.value.trim() || '';
+        var notes = document.getElementById('devisNotes')?.value.trim() || '';
+        var remiseGlobale = parseInt(document.getElementById('globalRemise')?.value) || 0;
+        var acompte = parseInt(document.getElementById('acompteSlider')?.value) || 30;
+        var sousTotal = cartItems.reduce(function(sum, item){ return sum + item.total; }, 0);
+        var total = Math.round(sousTotal * (100 - remiseGlobale) / 100);
+        var acompteMontant = Math.round(total * acompte / 100);
+        var uniqueCode = generateUniqueCode();
+        var devis = {
+            id: nextDevisId,
+            numero: 'DEV-' + new Date().getFullYear() + '-' + String(nextDevisId).padStart(4, '0'),
+            code: uniqueCode,
+            date: new Date().toISOString(),
+            validite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            client: clientName,
+            discord: clientDiscord,
+            pseudoJeu: clientPseudo,
+            serveur: clientServeur,
+            prestations: JSON.parse(JSON.stringify(cartItems)),
+            sousTotal: sousTotal,
+            remiseGlobale: remiseGlobale,
+            total: total,
+            acompte: acompte,
+            acompteMontant: acompteMontant,
+            notes: notes,
+            status: 'brouillon',
+            dateEnvoi: null,
+            vueClient: false,
+            dateConsultation: null
+        };
+        devisList.push(devis);
+        nextDevisId++;
+        localStorage.setItem('multifarm_devis_list', JSON.stringify(devisList));
+        showDevisShareDialog(devis);
+        cartItems = [];
+        updateCartBadge();
+        if (modal) modal.remove();
+        showNotification('Devis ' + devis.numero + ' créé avec succès !', 'success');
+        if (notificationEvents.indexOf('new') !== -1) {
+            fetch(webhookUrl, { method:'POST', body:JSON.stringify({ embeds: [{ title: '📄 Nouveau devis généré', description: devis.numero + ' pour ' + devis.client + ' - Total: ' + formatMoney(devis.total) + '\n🔑 Code: ' + devis.code, color: 0x9b59b6, timestamp: new Date().toISOString() }] }), headers:{'Content-Type':'application/json'} }).catch(function(e){});
+        }
+    }
+
+    function showDevisShareDialog(devis) {
+        var baseUrl = window.location.pathname.replace('PL.html', '');
+        var shareUrl = window.location.origin + baseUrl + 'client.html?devis=' + devis.code;
+        var modalContent = '<div class="share-devis-modal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:10002; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(8px);"><div style="background:var(--bg-card); border-radius:32px; width:90%; max-width:550px; border:2px solid #27ae60;"><div style="padding:28px;"><div style="text-align:center; margin-bottom:20px;"><div style="font-size:3rem;">🎉</div><h2 style="color:#27ae60; margin-top:10px;">Devis créé avec succès !</h2></div><div style="background:rgba(39,174,96,0.15); border-radius:20px; padding:25px; text-align:center; margin-bottom:20px; border:1px solid rgba(39,174,96,0.3);"><p style="color:var(--text-secondary); margin-bottom:10px; font-size:0.85rem;">🔑 CODE UNIQUE DU CLIENT</p><div style="font-size:1.8rem; font-weight:bold; letter-spacing:5px; background:#1e293b; padding:15px; border-radius:12px; font-family:monospace; border:1px solid #27ae60;">' + devis.code + '</div><p style="color:var(--text-secondary); margin-top:15px; font-size:0.8rem;">Ce code permet à votre client de consulter son devis</p></div><div style="margin-bottom:20px;"><p style="margin-bottom:8px;"><strong>📋 Récapitulatif</strong></p><div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>N° Devis:</span><strong>' + devis.numero + '</strong></div><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Client:</span><strong>' + escapeHtml(devis.client) + '</strong></div><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Total:</span><strong style="color:#2ecc71;">' + formatMoney(devis.total) + '</strong></div><div style="display:flex; justify-content:space-between;"><span>Validité:</span><strong>' + new Date(devis.validite).toLocaleDateString('fr-FR') + '</strong></div></div></div><div style="background:rgba(88,101,242,0.1); border-radius:16px; padding:15px; margin-bottom:20px;"><p style="margin-bottom:8px;"><strong>🔗 Lien de partage</strong></p><div style="font-size:0.7rem; word-break:break-all; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; margin-bottom:10px;">' + shareUrl + '</div><button id="copyLinkBtn" class="btn btn-primary" style="width:100%;">📋 Copier le lien</button></div><div style="display:flex; flex-direction:column; gap:12px;"><button id="copyCodeBtn" class="btn btn-info" style="width:100%;">📋 Copier le code</button><button id="closeShareModalBtn" class="btn btn-danger" style="width:100%;">Fermer</button></div><div style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border-color); text-align:center;"><p style="font-size:0.7rem; color:var(--text-secondary);">💡 Envoyez le code ou le lien à votre client.<br>Il pourra consulter et payer son devis en ligne.</p></div></div></div></div>';
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = modalContent;
+        var modal = tempDiv.firstElementChild;
+        document.body.appendChild(modal);
+        modal.querySelector('#copyCodeBtn')?.addEventListener('click', function() {
+            navigator.clipboard.writeText(devis.code);
+            showNotification('Code copié !', 'success');
+        });
+        modal.querySelector('#copyLinkBtn')?.addEventListener('click', function() {
+            navigator.clipboard.writeText(shareUrl);
+            showNotification('Lien copié !', 'success');
+        });
+        modal.querySelector('#closeShareModalBtn')?.addEventListener('click', function() { modal.remove(); });
+        modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+    }
+
+    function renderCartModal() {
+        var sousTotal = cartItems.reduce(function(sum, item){ return sum + item.total; }, 0);
+        var modalContent = '<div class="cart-modal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:10000; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(8px);"><div style="background:var(--bg-card); border-radius:32px; width:90%; max-width:1000px; max-height:90vh; overflow-y:auto; border:2px solid #e74c3c;"><div style="padding:24px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:2px solid var(--border-color); padding-bottom:15px;"><h2 style="color:#e74c3c;">🛒 Panier</h2><button id="closeCartModalBtn" style="background:#e74c3c; border:none; border-radius:30px; padding:8px 20px; color:white; cursor:pointer;">✖ Fermer</button></div>';
+        if (cartItems.length === 0) {
+            modalContent += '<div style="text-align:center; padding:60px;"><div style="font-size:4rem;">🛒</div><p>Votre panier est vide</p><button id="closeEmptyCartBtn" class="btn btn-primary">Fermer</button></div>';
+        } else {
+            modalContent += '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse;"><thead><tr style="background:rgba(231,76,60,0.1);"><th style="padding:12px; text-align:left;">Client</th><th style="padding:12px; text-align:left;">Formule</th><th style="padding:12px; text-align:center;">Qté</th><th style="padding:12px; text-align:right;">Prix unit.</th><th style="padding:12px; text-align:right;">Remise</th><th style="padding:12px; text-align:right;">Total</th><th style="padding:12px; text-align:center;">Action</th></tr></thead><tbody>';
+            for (var i = 0; i < cartItems.length; i++) {
+                var item = cartItems[i];
+                modalContent += '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:12px;">' + escapeHtml(item.pseudo || '-') + '</td><td style="padding:12px;">' + item.formule + '</td><td style="padding:12px; text-align:center;">' + item.quantite + '</td><td style="padding:12px; text-align:right;">' + formatMoney(item.prixBase) + '</td><td style="padding:12px; text-align:right;">' + item.remise + '%</td><td style="padding:12px; text-align:right; color:#2ecc71;">' + formatMoney(item.total) + '</td><td style="padding:12px; text-align:center;"><button class="remove-from-cart" data-index="' + i + '" style="background:#e74c3c; border:none; border-radius:6px; padding:5px 10px; color:white; cursor:pointer;">🗑️</button></td></tr>';
+            }
+            modalContent += '</tbody></table></div><div style="margin-top:24px; padding:20px; background:rgba(231,76,60,0.05); border-radius:20px;"><h3 style="color:#FFD966; margin-bottom:15px;">💰 Récapitulatif</h3><div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px;"><div style="flex:1;"><div style="margin-bottom:10px;"><label style="display:block; margin-bottom:5px;">👤 Informations client</label><input type="text" id="devisClientName" placeholder="Nom du client *" style="width:100%; margin-bottom:10px;"><input type="text" id="devisClientDiscord" placeholder="🎮 Discord (pseudo#1234)" style="width:100%; margin-bottom:10px;"><input type="text" id="devisClientPseudo" placeholder="⚔️ Pseudo en jeu" style="width:100%; margin-bottom:10px;"><input type="text" id="devisClientServeur" placeholder="🌍 Serveur (ex: Jahash, Agride...)" style="width:100%;"></div><div style="margin-top:15px;"><label style="display:block; margin-bottom:5px;">📝 Notes / Conditions</label><textarea id="devisNotes" rows="3" placeholder="Conditions particulières..." style="width:100%;"></textarea></div></div><div style="flex:1;"><div style="background:var(--bg-card); padding:15px; border-radius:16px;"><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Sous-total :</span><span>' + formatMoney(sousTotal) + '</span></div><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><span>Remise globale :</span><div><input type="number" id="globalRemise" value="0" min="0" max="100" step="1" style="width:70px; text-align:center;"> %<span id="remiseMontant" style="margin-left:10px; color:#e74c3c;">-0 K</span></div></div><div style="display:flex; justify-content:space-between; margin-bottom:15px; padding-top:10px; border-top:2px solid var(--border-color); font-size:1.2rem; font-weight:bold;"><span>TOTAL TTC :</span><span id="totalFinal" style="color:#2ecc71;">' + formatMoney(sousTotal) + '</span></div><div style="margin-top:15px;"><label style="display:block; margin-bottom:5px;">💵 Acompte :</label><div style="display:flex; align-items:center; gap:10px;"><input type="range" id="acompteSlider" min="0" max="100" value="30" style="flex:1;"><span id="acompteValue" style="min-width:60px;">30%</span></div><div id="acompteDetails" style="margin-top:10px; font-size:0.85rem;"></div></div></div></div></div></div><div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;"><button id="viderPanierBtn" class="btn btn-danger">🗑️ Vider</button><button id="genererDevisBtn" class="btn btn-success">📄 Générer devis</button></div>';
+        }
+        modalContent += '</div></div></div>';
+        var existingModal = document.querySelector('.cart-modal');
+        if (existingModal) existingModal.remove();
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = modalContent;
+        var modal = tempDiv.firstElementChild;
+        document.body.appendChild(modal);
+        cartModal = modal;
+        modal.querySelector('#closeCartModalBtn')?.addEventListener('click', function() { modal.remove(); });
+        modal.querySelector('#closeEmptyCartBtn')?.addEventListener('click', function() { modal.remove(); });
+        modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+        if (cartItems.length > 0) {
+            modal.querySelectorAll('.remove-from-cart').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(btn.dataset.index);
+                    removeFromCart(idx);
+                    renderCartModal();
+                });
+            });
+            var remiseInput = modal.querySelector('#globalRemise');
+            var remiseMontant = modal.querySelector('#remiseMontant');
+            var totalFinal = modal.querySelector('#totalFinal');
+            var acompteSlider = modal.querySelector('#acompteSlider');
+            var acompteValue = modal.querySelector('#acompteValue');
+            var acompteDetails = modal.querySelector('#acompteDetails');
+            var updateTotals = function() {
+                var sousTotalCalc = cartItems.reduce(function(sum, item){ return sum + item.total; }, 0);
+                var remise = parseInt(remiseInput.value) || 0;
+                var total = Math.round(sousTotalCalc * (100 - remise) / 100);
+                var remiseMontantCalc = sousTotalCalc - total;
+                remiseMontant.innerHTML = '-' + formatMoney(remiseMontantCalc);
+                totalFinal.innerHTML = formatMoney(total);
+                var acompte = parseInt(acompteSlider.value);
+                var acompteMontant = Math.round(total * acompte / 100);
+                acompteValue.innerHTML = acompte + '%';
+                acompteDetails.innerHTML = '💵 Acompte ' + acompte + '% : ' + formatMoney(acompteMontant) + '<br>💰 Solde : ' + formatMoney(total - acompteMontant);
+            };
+            remiseInput.oninput = updateTotals;
+            acompteSlider.oninput = updateTotals;
+            updateTotals();
+            modal.querySelector('#viderPanierBtn')?.addEventListener('click', function() {
+                if (confirm('Vider tout le panier ?')) {
+                    cartItems = [];
+                    updateCartBadge();
+                    modal.remove();
+                    showNotification('Panier vidé', 'info');
+                }
+            });
+            modal.querySelector('#genererDevisBtn')?.addEventListener('click', function() { generateDevisFromCart(modal); });
+        }
+    }
+
+    function openCart() { renderCartModal(); }
+
+    // ==================== AUTRES FONCTIONS ====================
+    function openAdminPanel() { window.open('admin.html', '_blank'); }
+
+    function openDiscordConfig() {
+        var modal = document.getElementById('discordConfigModal');
+        document.getElementById('webhookUrlInput').value = webhookUrl;
+        document.getElementById('customMessagePrefix').value = customMessagePrefix;
+        var checkboxes = document.querySelectorAll('#discordConfigModal input[type="checkbox"]');
+        checkboxes.forEach(function(cb) { cb.checked = notificationEvents.indexOf(cb.value) !== -1; });
+        modal.style.display = 'flex';
+    }
+
+    function testWebhook() {
+        var testUrl = document.getElementById('webhookUrlInput').value;
+        var testPrefix = document.getElementById('customMessagePrefix').value;
+        var resultDiv = document.getElementById('testResult');
+        if(!testUrl) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result test-error';
+            resultDiv.innerHTML = '❌ Veuillez entrer une URL';
+            return;
+        }
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '🔄 Test en cours...';
+        var prefixMsg = testPrefix ? '**' + testPrefix + '**\n' : '';
+        fetch(testUrl, {
+            method: 'POST',
+            body: JSON.stringify({ embeds: [{ title: prefixMsg + '🧪 Test Discord', description: 'Connexion OK ✅', color: 0x57f287, timestamp: new Date().toISOString() }] }),
+            headers: { 'Content-Type': 'application/json' }
+        }).then(function(response) {
+            if(response.ok) {
+                resultDiv.className = 'test-result test-success';
+                resultDiv.innerHTML = '✅ Test réussi !';
+            } else {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.innerHTML = '❌ Erreur ' + response.status;
+            }
+        }).catch(function() {
+            resultDiv.className = 'test-result test-error';
+            resultDiv.innerHTML = '❌ Erreur de connexion';
+        });
+    }
+
+    function saveDiscordConfig() {
+        webhookUrl = document.getElementById('webhookUrlInput').value;
+        customMessagePrefix = document.getElementById('customMessagePrefix').value;
+        var selectedEvents = [];
+        document.querySelectorAll('#discordConfigModal input[type="checkbox"]:checked').forEach(function(cb) { selectedEvents.push(cb.value); });
+        notificationEvents = selectedEvents;
+        saveData();
+        updateWebhookStatusBadge();
+        showNotification('Configuration sauvegardée', 'success');
+        document.getElementById('discordConfigModal').style.display = 'none';
+    }
+
+    function exportData() {
+        var data = { date: new Date().toISOString(), dailyGoal: dailyGoal, passeursAdmin: passeursAdmin, clients: clients, webhookUrl: webhookUrl, notificationEvents: notificationEvents, customMessagePrefix: customMessagePrefix, devisList: devisList, items: dungeonPassages };
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+        a.download = 'multifarm_export_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        showNotification('Export réussi', 'success');
+    }
+
+    function importData() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    if (data.items) {
+                        dungeonPassages = data.items;
+                        if (data.dailyGoal) dailyGoal = data.dailyGoal;
+                        if (data.passeursAdmin) passeursAdmin = data.passeursAdmin;
+                        if (data.clients) clients = data.clients;
+                        if (data.webhookUrl) webhookUrl = data.webhookUrl;
+                        if (data.notificationEvents) notificationEvents = data.notificationEvents;
+                        if (data.customMessagePrefix) customMessagePrefix = data.customMessagePrefix;
+                        if (data.devisList) devisList = data.devisList;
+                        if (dungeonPassages.length) nextId = Math.max(...dungeonPassages.map(function(p){ return p.id; })) + 1;
+                        if (devisList.length) nextDevisId = Math.max(...devisList.map(function(d){ return d.id; })) + 1;
+                        saveData();
+                        loadData();
+                        renderTable();
+                        updateProgress();
+                        updateCharts();
+                        updateFilterOptions();
+                        updateWebhookStatusBadge();
+                        updateCartBadge();
+                        showNotification('Importé: ' + dungeonPassages.length + ' commandes', 'success');
+                    } else {
+                        alert('Format invalide');
+                    }
+                } catch(err) {
+                    alert('Erreur import');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function resetAll() {
+        if (confirm('⚠️ Supprimer TOUTES les commandes ?')) {
+            dungeonPassages = [];
+            nextId = 1;
+            dailyGoal = 100000000;
+            passeursAdmin = [{ id:1, name:'GSTK', status:'active', commands:0, revenue:0 }, { id:2, name:'MultiFarm', status:'active', commands:0, revenue:0 }];
+            clients = [];
+            cartItems = [];
+            saveData();
+            loadData();
+            renderTable();
+            updateProgress();
+            updateCharts();
+            updateFilterOptions();
+            updateCartBadge();
+            showNotification('Tout réinitialisé', 'warning');
+        }
+    }
+
+    function setGoal() {
+        var ng = prompt('Objectif journalier (K) :', (dailyGoal/1000).toFixed(0));
+        if (ng) {
+            dailyGoal = parseInt(ng) * 1000;
+            saveData();
+            updateProgress();
+            showNotification('Objectif: ' + formatMoney(dailyGoal), 'success');
+        }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('multifarm_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        updateCharts();
+        showNotification(document.body.classList.contains('light-mode') ? 'Mode clair' : 'Mode sombre', 'info');
+    }
+
+    function saveToCloud() {
+        localStorage.setItem('multifarm_cloud_backup', JSON.stringify({ date: new Date().toISOString(), dailyGoal: dailyGoal, passeursAdmin: passeursAdmin, clients: clients, webhookUrl: webhookUrl, notificationEvents: notificationEvents, customMessagePrefix: customMessagePrefix, devisList: devisList, items: dungeonPassages }));
+        showNotification('☁️ Sauvegarde cloud effectuée', 'success');
+    }
+
+    function restoreFromCloud() {
+        var b = localStorage.getItem('multifarm_cloud_backup');
+        if (b) {
+            try {
+                var d = JSON.parse(b);
+                if (d.items) dungeonPassages = d.items;
+                if (d.dailyGoal) dailyGoal = d.dailyGoal;
+                if (d.passeursAdmin) passeursAdmin = d.passeursAdmin;
+                if (d.clients) clients = d.clients;
+                if (d.webhookUrl) webhookUrl = d.webhookUrl;
+                if (d.notificationEvents) notificationEvents = d.notificationEvents;
+                if (d.customMessagePrefix) customMessagePrefix = d.customMessagePrefix;
+                if (d.devisList) devisList = d.devisList;
+                if (dungeonPassages.length) nextId = Math.max(...dungeonPassages.map(function(p){ return p.id; })) + 1;
+                if (devisList.length) nextDevisId = Math.max(...devisList.map(function(d){ return d.id; })) + 1;
+                saveData();
+                loadData();
+                renderTable();
+                updateProgress();
+                updateCharts();
+                updateFilterOptions();
+                updateWebhookStatusBadge();
+                updateCartBadge();
+                showNotification('☁️ Restauration cloud réussie', 'success');
+            } catch(e) {
+                showNotification('Erreur restauration', 'warning');
+            }
+        } else {
+            showNotification('Aucune sauvegarde cloud', 'warning');
+        }
+    }
+
+    // ==================== INITIALISATION DU CONVERTISSEUR ====================
+    function initConverter() {
+        loadConversionRate();
+        var kamasInput = document.getElementById('kamasInput');
+        var eurosInput = document.getElementById('eurosInput');
+        var editRateBtn = document.getElementById('editRateBtn');
+        
+        if (kamasInput) {
+            kamasInput.addEventListener('input', function() {
+                var kamas = parseFloat(kamasInput.value) || 0;
+                eurosInput.value = (kamas / conversionRate).toFixed(2);
+            });
+        }
+        
+        if (eurosInput) {
+            eurosInput.addEventListener('input', function() {
+                var euros = parseFloat(eurosInput.value) || 0;
+                kamasInput.value = Math.round(euros * conversionRate);
+            });
+        }
+        
+        if (editRateBtn) {
+            editRateBtn.addEventListener('click', saveConversionRate);
+        }
+        
+        updateRevenueDisplay();
+    }
+
+    // Surcharge de updateProgress
+    var originalUpdateProgress = updateProgress;
+    updateProgress = function() {
+        originalUpdateProgress();
+        updateRevenueDisplay();
+    };
+
+    // ==================== INITIALISATION ====================
+    window.addEventListener('DOMContentLoaded', function() {
+        var savedTheme = localStorage.getItem('multifarm_theme');
+        if (savedTheme === 'light') document.body.classList.add('light-mode');
+        loadData();
+        renderTable();
+        updateProgress();
+        updateCharts();
+        updateFilterOptions();
+        updateCartBadge();
+        initConverter();
+
+        document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
+        document.getElementById('openDiscordConfigBtn')?.addEventListener('click', openDiscordConfig);
+        document.getElementById('testWebhookBtn')?.addEventListener('click', testWebhook);
+        document.getElementById('saveWebhookBtn')?.addEventListener('click', saveDiscordConfig);
+        document.getElementById('closeDiscordModal')?.addEventListener('click', function() { document.getElementById('discordConfigModal').style.display = 'none'; });
+        document.getElementById('adminPanelBtn')?.addEventListener('click', openAdminPanel);
+        document.getElementById('exportBtn')?.addEventListener('click', exportData);
+        document.getElementById('importBtn')?.addEventListener('click', importData);
+        document.getElementById('backupCloudBtn')?.addEventListener('click', function() { if (confirm('Sauvegarder ou restaurer ?\nOK=Sauvegarder\nAnnuler=Restaurer')) saveToCloud(); else restoreFromCloud(); });
+        document.getElementById('resetBtn')?.addEventListener('click', resetAll);
+        document.getElementById('setGoalBtn')?.addEventListener('click', setGoal);
+        document.getElementById('searchClient')?.addEventListener('input', renderTable);
+        document.getElementById('filterCategory')?.addEventListener('change', renderTable);
+        document.getElementById('filterStatus')?.addEventListener('change', renderTable);
+        document.getElementById('filterPasseur')?.addEventListener('change', renderTable);
+        document.getElementById('filterPayment')?.addEventListener('change', renderTable);
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('discordConfigModal');
+            if (event.target === modal) modal.style.display = 'none';
+        };
+    });
+
+    window.addDungeonRow = addDungeonRow;
+})();
+</script>
+</body>
+</html>
