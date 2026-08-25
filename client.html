@@ -402,7 +402,6 @@
             .devis-container { margin: 0; border: none; }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 <div class="app-wrapper">
@@ -413,6 +412,7 @@
         </div>
         <div class="action-buttons">
             <button class="btn btn-theme" id="themeToggleBtn">🌓 Thème</button>
+            <button class="btn btn-primary" id="goToAppBtn">🏠 Retour</button>
         </div>
     </div>
 
@@ -438,154 +438,112 @@
 
 <script>
 (function() {
-    // ==================== DONNÉES DE DÉMONSTRATION ====================
+    // ==================== CHARGEMENT DES DEVIS ====================
     var devisList = [];
-    
-    function initDemoDevis() {
+
+    function loadDevisData() {
+        try {
+            var saved = localStorage.getItem('multifarm_devis_list');
+            if (saved) {
+                devisList = JSON.parse(saved);
+                console.log('✅ Devis chargés:', devisList.length);
+                if (devisList.length > 0) {
+                    console.log('📋 Codes disponibles:', devisList.map(function(d) { return d.code; }).join(', '));
+                }
+            } else {
+                console.log('ℹ️ Aucun devis trouvé dans localStorage');
+                // Créer un devis de démonstration si aucun devis n'existe
+                createDemoDevis();
+            }
+        } catch (e) {
+            console.error('❌ Erreur chargement devis:', e);
+            devisList = [];
+        }
+    }
+
+    function createDemoDevis() {
         var demoDevis = {
             id: 1,
             numero: "DEV-2026-0001",
             code: "DEMO1234",
             date: new Date().toISOString(),
             validite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            client: "Jean Client Démo",
-            discord: "Jean#1234",
-            pseudoJeu: "JeanLeBoss",
+            client: "Client Démo",
+            discord: "Demo#1234",
+            pseudoJeu: "DemoPlayer",
             serveur: "Jahash",
             prestations: [
                 {
                     formule: "PL Mallefisk 50 → 200",
-                    pseudo: "JeanEude",
+                    pseudo: "PersonnageTest",
                     quantite: 1,
                     prixBase: 18000000,
                     remise: 0,
                     total: 18000000
-                },
-                {
-                    formule: "PL Nidas Drop Parangon",
-                    pseudo: "JeanEude",
-                    quantite: 1,
-                    prixBase: 9000000,
-                    remise: 5,
-                    total: 8550000
                 }
             ],
-            sousTotal: 26550000,
+            sousTotal: 18000000,
             remiseGlobale: 0,
-            total: 26550000,
+            total: 18000000,
             acompte: 30,
-            acompteMontant: 7965000,
+            acompteMontant: 5400000,
             notes: "Devis de démonstration - Valable 30 jours",
             status: "brouillon",
             vueClient: false,
             dateConsultation: null
         };
-        
         devisList = [demoDevis];
-        localStorage.setItem("multifarm_devis_list", JSON.stringify(devisList));
+        localStorage.setItem('multifarm_devis_list', JSON.stringify(devisList));
+        console.log('✅ Devis de démonstration créé avec le code: DEMO1234');
     }
-    
-    function loadDevisData() {
-        try {
-            var saved = localStorage.getItem("multifarm_devis_list");
-            if (saved && saved !== "[]") {
-                devisList = JSON.parse(saved);
-                if (devisList.length === 0) {
-                    initDemoDevis();
-                }
-            } else {
-                initDemoDevis();
-            }
-        } catch (e) {
-            initDemoDevis();
-        }
-    }
-    
+
     function saveDevisData() {
-        localStorage.setItem("multifarm_devis_list", JSON.stringify(devisList));
+        localStorage.setItem('multifarm_devis_list', JSON.stringify(devisList));
     }
 
     function savePaymentProof(devisCode, paymentData) {
-        var payments = JSON.parse(localStorage.getItem("multifarm_payments") || "[]");
+        var payments = JSON.parse(localStorage.getItem('multifarm_payments') || '[]');
         payments.push({
             id: Date.now(),
             devisCode: devisCode,
             ...paymentData,
             date: new Date().toISOString(),
-            status: "en_attente"
+            status: 'en_attente'
         });
-        localStorage.setItem("multifarm_payments", JSON.stringify(payments));
+        localStorage.setItem('multifarm_payments', JSON.stringify(payments));
     }
 
+    // ==================== FONCTIONS UTILITAIRES ====================
     function formatMoney(v) {
-        if (v === undefined || v === null || isNaN(v)) return "0 K";
-        return v.toLocaleString("fr-FR") + " K";
+        if (v === undefined || v === null || isNaN(v)) return '0 K';
+        return v.toLocaleString('fr-FR') + ' K';
     }
 
     function escapeHtml(s) {
-        if (!s) return "";
-        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (!s) return '';
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function showNotification(msg, type) {
-        var n = document.createElement("div");
-        var notifClass = (type === "success") ? "notification-success" : ((type === "error") ? "notification-error" : "notification-info");
-        n.className = "notification-toast " + notifClass;
-        var icon = (type === "success") ? "✅ " : ((type === "error") ? "❌ " : "ℹ️ ");
+        var n = document.createElement('div');
+        var notifClass = (type === 'success') ? 'notification-success' : ((type === 'error') ? 'notification-error' : 'notification-info');
+        n.className = 'notification-toast ' + notifClass;
+        var icon = (type === 'success') ? '✅ ' : ((type === 'error') ? '❌ ' : 'ℹ️ ');
         n.innerHTML = icon + msg;
         document.body.appendChild(n);
         setTimeout(function() { n.remove(); }, 3000);
     }
 
-    // Fonction pour revenir à la page de recherche
+    // ==================== AFFICHAGE DU DEVIS ====================
     function goBackToSearch() {
-        var resultSection = document.getElementById("resultSection");
-        var searchSection = document.getElementById("searchSection");
-        resultSection.style.display = "none";
-        searchSection.style.display = "block";
-        document.getElementById("devisCodeInput").value = "";
+        var resultSection = document.getElementById('resultSection');
+        var searchSection = document.getElementById('searchSection');
+        resultSection.style.display = 'none';
+        searchSection.style.display = 'block';
+        document.getElementById('devisCodeInput').value = '';
         window.selectedPaymentMethod = null;
         window.uploadedFile = null;
         window.uploadedFileName = null;
-    }
-
-    // Fonction pour exporter en PDF
-    function exportToPDF() {
-        var devisContainer = document.querySelector(".devis-container");
-        if (!devisContainer) {
-            showNotification("Aucun devis à exporter", "error");
-            return;
-        }
-        
-        // Créer une copie du contenu pour l'export
-        var originalContainer = devisContainer.cloneNode(true);
-        
-        // Supprimer le bouton de fermeture dans la copie
-        var closeBtn = originalContainer.querySelector(".close-devis-btn");
-        if (closeBtn) closeBtn.remove();
-        
-        // Supprimer la section de paiement dans la copie
-        var paymentSection = originalContainer.querySelector(".payment-section");
-        if (paymentSection) paymentSection.remove();
-        
-        // Options pour html2pdf
-        var opt = {
-            margin: [0.5, 0.5, 0.5, 0.5],
-            filename: "devis_" + (window.currentDevisNumero || "document") + ".pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, letterRendering: true, useCORS: true },
-            jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
-        };
-        
-        showNotification("Génération du PDF en cours...", "info");
-        
-        // Exporter en PDF
-        html2pdf().set(opt).from(originalContainer).save().then(function() {
-            showNotification("PDF exporté avec succès !", "success");
-        }).catch(function(err) {
-            console.error("Erreur PDF:", err);
-            showNotification("Erreur lors de l'export PDF", "error");
-        });
     }
 
     function showDevis(code) {
@@ -596,26 +554,25 @@
                 break;
             }
         }
-        
+
         if (!devis) {
-            var errorDiv = document.getElementById("errorMessage");
-            errorDiv.innerHTML = '<div class="error-message">❌ Code de devis invalide. Vérifiez votre code.<br>Codes disponibles: ' + devisList.map(function(d) { return d.code; }).join(", ") + '</div>';
-            showNotification("Code de devis invalide", "error");
-            setTimeout(function() { errorDiv.innerHTML = ""; }, 5000);
+            var errorDiv = document.getElementById('errorMessage');
+            var availableCodes = devisList.map(function(d) { return d.code; }).join(', ');
+            errorDiv.innerHTML = '<div class="error-message">❌ Code de devis invalide. Vérifiez votre code.<br>📋 Codes disponibles: ' + availableCodes + '</div>';
+            showNotification('Code de devis invalide', 'error');
+            setTimeout(function() { errorDiv.innerHTML = ''; }, 5000);
             return false;
         }
 
-        // Stocker le numéro du devis pour le nom du fichier PDF
-        window.currentDevisNumero = devis.numero;
-
+        // Marquer comme consulté
         devis.vueClient = true;
         devis.dateConsultation = new Date().toISOString();
         saveDevisData();
 
-        var date = new Date(devis.date).toLocaleDateString("fr-FR");
-        var validite = new Date(devis.validite).toLocaleDateString("fr-FR");
+        var date = new Date(devis.date).toLocaleDateString('fr-FR');
+        var validite = new Date(devis.validite).toLocaleDateString('fr-FR');
         var estExpire = new Date() > new Date(devis.validite);
-        var dejaPaye = devis.status === "paye";
+        var dejaPaye = devis.status === 'paye';
 
         var html = '<div class="devis-container">';
         html += '<button class="close-devis-btn" id="closeDevisBtn">✖</button>';
@@ -624,14 +581,14 @@
         html += '<p>Powerleveling - GSTK</p>';
         html += '</div>';
         html += '<div class="devis-body">';
-        
+
         if (estExpire) {
             html += '<div style="text-align:center;"><div class="expired-badge">⚠️ DEVIS EXPIRE ⚠️</div></div>';
         }
         if (dejaPaye) {
             html += '<div style="text-align:center;"><div class="expired-badge" style="background:#2ecc71;">✅ DEVIS PAYÉ ✅</div></div>';
         }
-        
+
         html += '<div style="text-align:center; margin-bottom:25px;">';
         html += '<h2 style="color:#27ae60; font-size:1.3rem;">📄 DEVIS</h2>';
         html += '<div style="display:flex; justify-content:center; gap:15px; margin-top:10px; flex-wrap:wrap;">';
@@ -640,7 +597,7 @@
         html += '<span><strong>Validité:</strong> ' + validite + '</span>';
         html += '<span><strong>Code:</strong> <span style="background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px; font-family:monospace;">' + devis.code + '</span></span>';
         html += '</div></div>';
-        
+
         html += '<div class="info-client">';
         html += '<h3>👤 Informations client</h3>';
         html += '<div class="info-grid">';
@@ -649,14 +606,14 @@
         if (devis.pseudoJeu) html += '<div><strong>⚔️ Pseudo en jeu:</strong> ' + escapeHtml(devis.pseudoJeu) + '</div>';
         if (devis.serveur) html += '<div><strong>🌍 Serveur:</strong> ' + escapeHtml(devis.serveur) + '</div>';
         html += '</div></div>';
-        
+
         html += '<h3 style="color:#FFD966; margin-bottom:15px;">📋 Prestations</h3>';
         html += '<div style="overflow-x:auto;">';
         html += '<table class="prestations-table"><thead><tr><th>Description</th><th style="text-align:center;">Qté</th><th style="text-align:right;">Prix unit.</th><th style="text-align:right;">Remise</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
         for (var i = 0; i < devis.prestations.length; i++) {
             var item = devis.prestations[i];
             html += '<tr>';
-            html += '<td>' + escapeHtml(item.formule) + '<br><small style="color:var(--text-secondary);">Personnage: ' + escapeHtml(item.pseudo || "-") + '</small></td>';
+            html += '<td>' + escapeHtml(item.formule) + '<br><small style="color:var(--text-secondary);">Personnage: ' + escapeHtml(item.pseudo || '-') + '</small></td>';
             html += '<td style="text-align:center;">' + item.quantite + '</td>';
             html += '<td style="text-align:right;">' + formatMoney(item.prixBase) + '</td>';
             html += '<td style="text-align:right;">' + item.remise + '%</td>';
@@ -664,7 +621,7 @@
             html += '</tr>';
         }
         html += '</tbody></table></div>';
-        
+
         html += '<div class="total-box">';
         html += '<div class="total-line"><span>Sous-total :</span><span>' + formatMoney(devis.sousTotal) + '</span></div>';
         if (devis.remiseGlobale > 0) {
@@ -674,14 +631,14 @@
         html += '<div class="total-line" style="color:#FFD966;"><span>Acompte (' + devis.acompte + '%) :</span><span>' + formatMoney(devis.acompteMontant) + '</span></div>';
         html += '<div class="total-line"><span>Solde :</span><span>' + formatMoney(devis.total - devis.acompteMontant) + '</span></div>';
         html += '</div>';
-        
+
         if (devis.notes) {
             html += '<div class="notes-box" style="background:rgba(0,0,0,0.2); border-radius:12px; padding:12px; margin-bottom:20px;">';
             html += '<h3 style="color:#FFD966; margin-bottom:8px;">📝 Notes</h3>';
             html += '<div>' + escapeHtml(devis.notes) + '</div>';
             html += '</div>';
         }
-        
+
         if (!estExpire && !dejaPaye) {
             html += '<div class="payment-section">';
             html += '<h3>💳 Paiement</h3>';
@@ -689,7 +646,8 @@
             html += '<div class="payment-methods">';
             html += '<div class="payment-method" data-method="kamas"><span class="icon">💰</span><span>Kamas</span></div>';
             html += '<div class="payment-method" data-method="ogrine"><span class="icon">✨</span><span>Ogrines</span></div>';
-            
+            html += '<div class="payment-method" data-method="paypal"><span class="icon">💳</span><span>PayPal</span></div>';
+            html += '<div class="payment-method" data-method="virement"><span class="icon">🏦</span><span>Virement</span></div>';
             html += '</div>';
             html += '<div class="upload-area" id="uploadArea">';
             html += '<div style="font-size:1.5rem; margin-bottom:5px;">📎</div>';
@@ -704,74 +662,76 @@
             html += '<div style="margin-top: 15px;">';
             html += '<textarea id="paymentNotes" rows="2" placeholder="Informations complémentaires..." style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; padding:8px;"></textarea>';
             html += '</div></div>';
-            
+
             html += '<div class="action-buttons">';
             html += '<button id="submitPaymentBtn" class="btn btn-success">✅ Confirmer</button>';
-            html += '<button id="exportPdfBtn" class="btn btn-warning">📄 Export PDF</button>';
+            html += '<button id="printDevisBtn" class="btn btn-info">🖨️ Imprimer</button>';
             html += '</div>';
         } else {
             html += '<div class="action-buttons">';
-            html += '<button id="exportPdfBtn" class="btn btn-warning">📄 Export PDF</button>';
+            html += '<button id="printDevisBtn" class="btn btn-info">🖨️ Imprimer</button>';
             html += '</div>';
         }
-        
+
         html += '</div></div>';
 
-        var resultSection = document.getElementById("resultSection");
-        var searchSection = document.getElementById("searchSection");
-        
+        var resultSection = document.getElementById('resultSection');
+        var searchSection = document.getElementById('searchSection');
+
         resultSection.innerHTML = html;
-        resultSection.style.display = "block";
-        searchSection.style.display = "none";
+        resultSection.style.display = 'block';
+        searchSection.style.display = 'none';
 
         // Bouton fermeture
-        document.getElementById("closeDevisBtn").addEventListener("click", goBackToSearch);
-        
-        // Bouton Export PDF
-        document.getElementById("exportPdfBtn").addEventListener("click", exportToPDF);
+        document.getElementById('closeDevisBtn').addEventListener('click', goBackToSearch);
 
+        // Bouton impression
+        document.getElementById('printDevisBtn').addEventListener('click', function() { window.print(); });
+
+        // Gestion du paiement
         if (!estExpire && !dejaPaye) {
-            var methods = document.querySelectorAll(".payment-method");
+            var methods = document.querySelectorAll('.payment-method');
             for (var i = 0; i < methods.length; i++) {
-                methods[i].addEventListener("click", function(e) {
-                    var allMethods = document.querySelectorAll(".payment-method");
+                methods[i].addEventListener('click', function() {
+                    var allMethods = document.querySelectorAll('.payment-method');
                     for (var j = 0; j < allMethods.length; j++) {
-                        allMethods[j].classList.remove("selected");
+                        allMethods[j].classList.remove('selected');
                     }
-                    this.classList.add("selected");
+                    this.classList.add('selected');
                     window.selectedPaymentMethod = this.dataset.method;
                 });
             }
 
-            var uploadArea = document.getElementById("uploadArea");
-            var fileInput = document.getElementById("fileInput");
-            
-            uploadArea.addEventListener("click", function() { fileInput.click(); });
-            uploadArea.addEventListener("dragover", function(e) { e.preventDefault(); uploadArea.classList.add("drag-over"); });
-            uploadArea.addEventListener("dragleave", function() { uploadArea.classList.remove("drag-over"); });
-            uploadArea.addEventListener("drop", function(e) {
+            var uploadArea = document.getElementById('uploadArea');
+            var fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', function() { fileInput.click(); });
+            uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+            uploadArea.addEventListener('dragleave', function() { uploadArea.classList.remove('drag-over'); });
+            uploadArea.addEventListener('drop', function(e) {
                 e.preventDefault();
-                uploadArea.classList.remove("drag-over");
+                uploadArea.classList.remove('drag-over');
                 if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
             });
-            
-            fileInput.addEventListener("change", function(e) {
+
+            fileInput.addEventListener('change', function(e) {
                 if (e.target.files[0]) handleFile(e.target.files[0]);
             });
-            
-            document.getElementById("removeFileBtn").addEventListener("click", function() {
+
+            document.getElementById('removeFileBtn').addEventListener('click', function() {
                 window.uploadedFile = null;
                 window.uploadedFileName = null;
-                document.getElementById("fileInfo").style.display = "none";
-                fileInput.value = "";
+                document.getElementById('fileInfo').style.display = 'none';
+                fileInput.value = '';
             });
-            
-            document.getElementById("submitPaymentBtn").addEventListener("click", function() { submitPayment(devis); });
+
+            document.getElementById('submitPaymentBtn').addEventListener('click', function() { submitPayment(devis); });
         }
 
         return true;
     }
-    
+
+    // ==================== GESTION DU PAIEMENT ====================
     var uploadedFile = null;
     var uploadedFileName = null;
     var selectedPaymentMethod = null;
@@ -779,44 +739,44 @@
     function handleFile(file) {
         var maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            showNotification("Fichier trop volumineux (max 5MB)", "error");
+            showNotification('Fichier trop volumineux (max 5MB)', 'error');
             return;
         }
-        var allowedTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+        var allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
         var isAllowed = false;
         for (var i = 0; i < allowedTypes.length; i++) {
             if (file.type === allowedTypes[i]) { isAllowed = true; break; }
         }
         if (!isAllowed) {
-            showNotification("Format non supporté (PNG, JPG, PDF)", "error");
+            showNotification('Format non supporté (PNG, JPG, PDF)', 'error');
             return;
         }
         window.uploadedFile = file;
         window.uploadedFileName = file.name;
-        document.getElementById("fileName").innerHTML = file.name;
-        document.getElementById("fileInfo").style.display = "flex";
-        showNotification("Fichier ajouté", "success");
+        document.getElementById('fileName').innerHTML = file.name;
+        document.getElementById('fileInfo').style.display = 'flex';
+        showNotification('Fichier ajouté', 'success');
     }
 
     function submitPayment(devis) {
         var selectedMethod = null;
-        var selectedElem = document.querySelector(".payment-method.selected");
+        var selectedElem = document.querySelector('.payment-method.selected');
         if (selectedElem) {
             selectedMethod = selectedElem.dataset.method;
         }
-        
+
         if (!selectedMethod) {
-            showNotification("Choisissez un mode de paiement", "error");
+            showNotification('Choisissez un mode de paiement', 'error');
             return;
         }
         if (!window.uploadedFile) {
-            showNotification("Ajoutez une preuve de paiement", "error");
+            showNotification('Ajoutez une preuve de paiement', 'error');
             return;
         }
-        
-        var paymentNotes = document.getElementById("paymentNotes") ? document.getElementById("paymentNotes").value : "";
-        showNotification("Envoi en cours...", "info");
-        
+
+        var paymentNotes = document.getElementById('paymentNotes') ? document.getElementById('paymentNotes').value : '';
+        showNotification('Envoi en cours...', 'info');
+
         var reader = new FileReader();
         reader.onloadend = function() {
             var paymentData = {
@@ -829,64 +789,64 @@
                 methode: selectedMethod,
                 notes: paymentNotes,
                 fichier: { nom: window.uploadedFileName, type: window.uploadedFile.type, data: reader.result },
-                status: "en_attente"
+                status: 'en_attente'
             };
             savePaymentProof(devis.code, paymentData);
-            devis.status = "paye";
+            devis.status = 'paye';
             devis.datePaiement = new Date().toISOString();
             saveDevisData();
-            showNotification("Paiement envoyé ! Un conseiller va valider.", "success");
+            showNotification('Paiement envoyé ! Un conseiller va valider.', 'success');
             setTimeout(function() { showDevis(devis.code); }, 1500);
         };
         reader.readAsDataURL(window.uploadedFile);
     }
 
+    // ==================== INITIALISATION ====================
     function checkUrlForDevisCode() {
         var urlParams = new URLSearchParams(window.location.search);
-        var devisCode = urlParams.get("devis");
+        var devisCode = urlParams.get('devis');
         if (devisCode) {
-            document.getElementById("devisCodeInput").value = devisCode;
+            document.getElementById('devisCodeInput').value = devisCode;
             setTimeout(function() { showDevis(devisCode); }, 100);
             var newUrl = window.location.pathname;
-            window.history.pushState({}, "", newUrl);
+            window.history.pushState({}, '', newUrl);
         }
     }
 
     function init() {
         loadDevisData();
-        
-        document.getElementById("consultDevisBtn").addEventListener("click", function() {
-            var code = document.getElementById("devisCodeInput").value.trim().toUpperCase();
+
+        document.getElementById('consultDevisBtn').addEventListener('click', function() {
+            var code = document.getElementById('devisCodeInput').value.trim().toUpperCase();
             if (code) {
                 showDevis(code);
             } else {
-                showNotification("Entrez un code", "error");
+                showNotification('Entrez un code', 'error');
             }
         });
-        
-        document.getElementById("devisCodeInput").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                document.getElementById("consultDevisBtn").click();
+
+        document.getElementById('devisCodeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('consultDevisBtn').click();
             }
         });
-        
-        document.getElementById("goToAppBtn").addEventListener("click", function() {
-            window.location.href = "PL.html";
+
+        document.getElementById('goToAppBtn').addEventListener('click', function() {
+            window.location.href = 'PL.html';
         });
-        
-        var savedTheme = localStorage.getItem("multifarm_theme");
-        if (savedTheme === "light") document.body.classList.add("light-mode");
-        
-        document.getElementById("themeToggleBtn").addEventListener("click", function() {
-            document.body.classList.toggle("light-mode");
-            localStorage.setItem("multifarm_theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+
+        var savedTheme = localStorage.getItem('multifarm_theme');
+        if (savedTheme === 'light') document.body.classList.add('light-mode');
+
+        document.getElementById('themeToggleBtn').addEventListener('click', function() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('multifarm_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
         });
-        
+
         checkUrlForDevisCode();
-        
-        console.log("Codes de devis disponibles:", devisList.map(function(d) { return d.code; }));
+        console.log('📋 Application client.html initialisée');
     }
-    
+
     init();
 })();
 </script>
