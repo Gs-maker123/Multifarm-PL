@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiFarm Pro - Powerleveling</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:linear-gradient(135deg,#0a0e1a 0%,#0f172a 100%);font-family:'Segoe UI',system-ui,sans-serif;color:#f1f5f9;min-height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column}
+        .container{text-align:center;padding:40px}
+        h1{font-size:3rem;background:linear-gradient(135deg,#FFD966,#FFA500);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:20px}
+        p{color:#94a3b8;font-size:1.1rem;margin-bottom:30px}
+        .links{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+        .btn{display:inline-block;padding:14px 32px;border-radius:40px;text-decoration:none;font-weight:600;transition:all .3s;font-size:1rem}
+        .btn:hover{transform:translateY(-3px);filter:brightness(1.05)}
+        .btn-primary{background:linear-gradient(135deg,#2c5f2d,#1e3a1e);color:#fff}
+        .btn-admin{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+        .btn-client{background:linear-gradient(135deg,#2980b9,#1f618d);color:#fff}
+        .footer{margin-top:50px;color:#5b7c9e;font-size:.8rem}
+        @media(max-width:600px){h1{font-size:2rem}.links{flex-direction:column}.btn{width:100%;text-align:center}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ MultiFarm Pro</h1>
+        <p>Powerleveling - Donjons & XP - Gestion complète</p>
+        <div class="links">
+            <a href="PL.html" class="btn btn-primary">📋 Interface Opérateur</a>
+            <a href="client.html" class="btn btn-client">👤 Consultation Devis</a>
+            <a href="admin.html" class="btn btn-admin">👑 Administration</a>
+        </div>
+        <div class="footer">MultiFarm - Powerleveling by GSTK © 2026</div>
+    </div>
+</body>
+</html>
