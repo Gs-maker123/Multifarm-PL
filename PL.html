@@ -26,6 +26,10 @@
             --discord-blurple: #5865F2;
             --discord-green: #57F287;
             --discord-red: #ED4245;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
         }
 
         body.light-mode {
@@ -155,6 +159,73 @@
             font-weight: bold;
         }
 
+        /* Calculateur XP */
+        .xp-calculator {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(52, 152, 219, 0.08);
+            border-radius: 14px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        .xp-calculator .xp-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .xp-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .xp-row label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+        .xp-row input {
+            flex: 1;
+            min-width: 100px;
+            padding: 4px 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.75rem;
+        }
+        .xp-row input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        .xp-result {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .xp-result-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .xp-result-item .value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        .xp-result-item .label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+        .xp-result-item.total .value { color: #FFD966; }
+        .xp-result-item.dungeons .value { color: #3498db; }
+        .xp-result-item.price .value { color: #2ecc71; }
+
         .stats-mini {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -171,7 +242,6 @@
         .stat-mini-value { font-size: 1.2rem; font-weight: bold; color: #FFD966; }
         .stat-mini-sub { font-size: 0.6rem; color: var(--text-secondary); margin-top: 2px; }
 
-        /* Convertisseur */
         .converter-section {
             margin-top: 12px;
             padding: 12px;
@@ -383,6 +453,9 @@
             .converter-row { flex-wrap: wrap; justify-content: center; }
             .table-actions { flex-direction: column; align-items: center; }
             .table-actions .btn { width: 100%; justify-content: center; }
+            .xp-result { grid-template-columns: 1fr; }
+            .xp-row { flex-direction: column; align-items: stretch; }
+            .xp-row label { min-width: auto; }
         }
 
         @media (max-width: 480px) {
@@ -441,6 +514,45 @@
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill" id="progressFill" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+
+                <!-- Calculateur XP -->
+                <div class="xp-calculator">
+                    <div class="xp-title">🎯 Calculateur d'objectif XP</div>
+                    <div class="xp-row">
+                        <label>🎯 Objectif XP</label>
+                        <input type="number" id="xpGoal" placeholder="Ex: 200 000 000" min="0" step="1000" value="0">
+                    </div>
+                    <div class="xp-row">
+                        <label>📊 XP actuel</label>
+                        <input type="number" id="xpCurrent" placeholder="Ex: 50 000 000" min="0" step="1000" value="0">
+                    </div>
+                    <div class="xp-row">
+                        <label>⚔️ XP par combat</label>
+                        <input type="number" id="xpPerFight" placeholder="Ex: 5 000 000" min="0" step="1000" value="5000000">
+                    </div>
+                    <div class="xp-row">
+                        <label>💰 Prix / combat</label>
+                        <input type="number" id="pricePerFight" placeholder="Ex: 500 000" min="0" step="1000" value="500000">
+                    </div>
+                    <div class="xp-result">
+                        <div class="xp-result-item total">
+                            <div class="value" id="xpRemaining">0</div>
+                            <div class="label">XP à faire</div>
+                        </div>
+                        <div class="xp-result-item dungeons">
+                            <div class="value" id="dungeonsCount">0</div>
+                            <div class="label">Nombre de combats</div>
+                        </div>
+                        <div class="xp-result-item price">
+                            <div class="value" id="devisTotal">0 K</div>
+                            <div class="label">Total du devis</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                        <button id="addToCartFromXp" class="btn btn-success" style="font-size: 0.65rem; padding: 4px 12px;">🛒 Ajouter au panier</button>
+                        <button id="resetXpCalculator" class="btn btn-danger" style="font-size: 0.65rem; padding: 4px 12px;">🔄 Réinitialiser</button>
                     </div>
                 </div>
 
@@ -575,69 +687,7 @@
     var cartModal = null;
 
     // ==================== TAUX DE CONVERSION ====================
-    // 0.65 € = 1 000 000 K => 1 € = 1 538 461.538 K
     var conversionRate = 1538461.54;
-
-    function loadConversionRate() {
-        try {
-            var saved = localStorage.getItem('multifarm_conversion_rate');
-            if (saved) {
-                var rate = parseFloat(saved);
-                if (!isNaN(rate) && rate > 0) conversionRate = rate;
-            }
-        } catch(e) {}
-        updateRateDisplay();
-    }
-
-    function saveConversionRate() {
-        var newRate = prompt('Entrez le nouveau taux (1 € = ? K) :\n(Actuellement: ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K)', Math.round(conversionRate));
-        if (newRate !== null) {
-            var rate = parseFloat(newRate.replace(/\s/g, ''));
-            if (!isNaN(rate) && rate > 0) {
-                conversionRate = rate;
-                localStorage.setItem('multifarm_conversion_rate', conversionRate);
-                updateRateDisplay();
-                updateAllConversions();
-                showNotification('Taux mis à jour: 1 € = ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K', 'success');
-            } else {
-                showNotification('Veuillez entrer un nombre valide', 'warning');
-            }
-        }
-    }
-
-    function updateRateDisplay() {
-        var display = document.getElementById('rateDisplay');
-        if (display) display.innerHTML = Math.round(conversionRate).toLocaleString('fr-FR');
-    }
-
-    function kamasToEuros(kamas) { return kamas / conversionRate; }
-    function eurosToKamas(euros) { return euros * conversionRate; }
-
-    function updateAllConversions() {
-        updateConverterFields();
-        updateRevenueDisplay();
-    }
-
-    function updateConverterFields() {
-        var kamasInput = document.getElementById('kamasInput');
-        var eurosInput = document.getElementById('eurosInput');
-        if (!kamasInput || !eurosInput) return;
-        var kamas = parseFloat(kamasInput.value) || 0;
-        eurosInput.value = (kamas / conversionRate).toFixed(2);
-    }
-
-    function updateRevenueDisplay() {
-        var today = getTodayRevenue();
-        var weekly = getWeeklyRevenue();
-        var todayEl = document.getElementById('todayRevenue');
-        var weeklyEl = document.getElementById('weeklyRevenue');
-        var todayEuro = document.getElementById('todayRevenueEuro');
-        var weeklyEuro = document.getElementById('weeklyRevenueEuro');
-        if (todayEl) todayEl.innerHTML = formatMoney(today);
-        if (weeklyEl) weeklyEl.innerHTML = formatMoney(weekly);
-        if (todayEuro) todayEuro.innerHTML = kamasToEuros(today).toFixed(2) + ' €';
-        if (weeklyEuro) weeklyEuro.innerHTML = kamasToEuros(weekly).toFixed(2) + ' €';
-    }
 
     // ==================== CONSTANTES ====================
     var STATUSES = [
@@ -794,6 +844,7 @@
         }
     }
 
+    // ==================== STATISTIQUES ====================
     function updatePasseurStats() {
         passeursAdmin.forEach(function(p) { p.commands = 0; p.revenue = 0; });
         dungeonPassages.forEach(function(cmd) {
@@ -861,6 +912,7 @@
         charts.evolutionChart = new Chart(document.getElementById('evolutionChart'), { type:'line', data:{ labels:days, datasets:[{ label:'CA', data:evoData, borderColor:'#FFD966', backgroundColor:'rgba(255,217,102,0.1)', fill:true, tension:0.4 }] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ ticks:{ callback:function(v){ return formatMoney(v); }, color:textColor }, title:{ display:true, text:'Montant', color:textColor } }, x:{ ticks:{ color:textColor } } }, plugins:{ legend:{ labels:{ color:textColor } }, tooltip:{ callbacks:{ label:function(ctx){ return formatMoney(ctx.raw); } } } } } });
     }
 
+    // ==================== PROGRESSION ====================
     function updateProgress() {
         var total = getTotalPrice();
         var percent = Math.min((total / dailyGoal) * 100, 100);
@@ -883,6 +935,7 @@
         }
     }
 
+    // ==================== FILTRES ====================
     function updateFilterOptions() {
         var catSelect = document.getElementById('filterCategory');
         var statusSelect = document.getElementById('filterStatus');
@@ -967,6 +1020,7 @@
         if(cartBtn) cartBtn.addEventListener('click', openCart);
     }
 
+    // ==================== GESTION DES COMMANDES ====================
     function handleFieldChange(e) {
         var id = parseInt(e.target.dataset.id);
         var item = dungeonPassages.find(function(p){ return p.id === id; });
@@ -1308,6 +1362,157 @@
 
     function openCart() { renderCartModal(); }
 
+    // ==================== CALCULATEUR XP ====================
+    function calculateXP() {
+        var goal = parseInt(document.getElementById('xpGoal').value) || 0;
+        var current = parseInt(document.getElementById('xpCurrent').value) || 0;
+        var xpPerFight = parseInt(document.getElementById('xpPerFight').value) || 1;
+        var pricePerFight = parseInt(document.getElementById('pricePerFight').value) || 0;
+
+        var xpRemaining = Math.max(0, goal - current);
+        var dungeons = Math.ceil(xpRemaining / xpPerFight);
+        var totalPrice = dungeons * pricePerFight;
+
+        document.getElementById('xpRemaining').innerHTML = xpRemaining.toLocaleString('fr-FR');
+        document.getElementById('dungeonsCount').innerHTML = dungeons.toLocaleString('fr-FR');
+        document.getElementById('devisTotal').innerHTML = formatMoney(totalPrice);
+
+        return { xpRemaining: xpRemaining, dungeons: dungeons, totalPrice: totalPrice, xpPerFight: xpPerFight, pricePerFight: pricePerFight };
+    }
+
+    function addXpToCart() {
+        var result = calculateXP();
+        if (result.dungeons === 0 || result.totalPrice === 0) {
+            showNotification('Aucun calcul à ajouter (vérifiez les valeurs)', 'warning');
+            return;
+        }
+
+        var clientName = prompt('Nom du client pour ce devis :', 'Client XP');
+        if (!clientName) return;
+
+        var pseudo = prompt('Pseudo du personnage :', 'Personnage');
+        if (!pseudo) return;
+
+        cartItems.push({
+            id: Date.now(),
+            pseudo: pseudo,
+            formule: 'PL XP - ' + result.dungeons + ' combats',
+            categorie: 'enutrosor',
+            quantite: result.dungeons,
+            prixBase: result.pricePerFight,
+            remise: 0,
+            total: result.totalPrice,
+            isXpPackage: true,
+            xpData: {
+                goal: parseInt(document.getElementById('xpGoal').value) || 0,
+                current: parseInt(document.getElementById('xpCurrent').value) || 0,
+                xpPerFight: result.xpPerFight,
+                dungeons: result.dungeons
+            }
+        });
+
+        updateCartBadge();
+        showNotification(result.dungeons + ' combats ajoutés au panier pour ' + clientName, 'success');
+    }
+
+    function resetXpCalculator() {
+        document.getElementById('xpGoal').value = '';
+        document.getElementById('xpCurrent').value = '';
+        document.getElementById('xpPerFight').value = '5000000';
+        document.getElementById('pricePerFight').value = '500000';
+        calculateXP();
+        showNotification('Calculateur réinitialisé', 'info');
+    }
+
+    // ==================== CONVERTISSEUR K/E ====================
+    function loadConversionRate() {
+        try {
+            var saved = localStorage.getItem('multifarm_conversion_rate');
+            if (saved) {
+                var rate = parseFloat(saved);
+                if (!isNaN(rate) && rate > 0) conversionRate = rate;
+            }
+        } catch(e) {}
+        updateRateDisplay();
+    }
+
+    function saveConversionRate() {
+        var newRate = prompt('Entrez le nouveau taux (1 € = ? K) :\n(Actuellement: ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K)', Math.round(conversionRate));
+        if (newRate !== null) {
+            var rate = parseFloat(newRate.replace(/\s/g, ''));
+            if (!isNaN(rate) && rate > 0) {
+                conversionRate = rate;
+                localStorage.setItem('multifarm_conversion_rate', conversionRate);
+                updateRateDisplay();
+                updateAllConversions();
+                showNotification('Taux mis à jour: 1 € = ' + Math.round(conversionRate).toLocaleString('fr-FR') + ' K', 'success');
+            } else {
+                showNotification('Veuillez entrer un nombre valide', 'warning');
+            }
+        }
+    }
+
+    function updateRateDisplay() {
+        var display = document.getElementById('rateDisplay');
+        if (display) display.innerHTML = Math.round(conversionRate).toLocaleString('fr-FR');
+    }
+
+    function kamasToEuros(kamas) { return kamas / conversionRate; }
+    function eurosToKamas(euros) { return euros * conversionRate; }
+
+    function updateAllConversions() {
+        updateConverterFields();
+        updateRevenueDisplay();
+    }
+
+    function updateConverterFields() {
+        var kamasInput = document.getElementById('kamasInput');
+        var eurosInput = document.getElementById('eurosInput');
+        if (!kamasInput || !eurosInput) return;
+        var kamas = parseFloat(kamasInput.value) || 0;
+        eurosInput.value = (kamas / conversionRate).toFixed(2);
+    }
+
+    function updateRevenueDisplay() {
+        var today = getTodayRevenue();
+        var weekly = getWeeklyRevenue();
+        var todayEl = document.getElementById('todayRevenue');
+        var weeklyEl = document.getElementById('weeklyRevenue');
+        var todayEuro = document.getElementById('todayRevenueEuro');
+        var weeklyEuro = document.getElementById('weeklyRevenueEuro');
+        if (todayEl) todayEl.innerHTML = formatMoney(today);
+        if (weeklyEl) weeklyEl.innerHTML = formatMoney(weekly);
+        if (todayEuro) todayEuro.innerHTML = kamasToEuros(today).toFixed(2) + ' €';
+        if (weeklyEuro) weeklyEuro.innerHTML = kamasToEuros(weekly).toFixed(2) + ' €';
+    }
+
+    function initConverter() {
+        loadConversionRate();
+        var kamasInput = document.getElementById('kamasInput');
+        var eurosInput = document.getElementById('eurosInput');
+        var editRateBtn = document.getElementById('editRateBtn');
+        
+        if (kamasInput) {
+            kamasInput.addEventListener('input', function() {
+                var kamas = parseFloat(kamasInput.value) || 0;
+                eurosInput.value = (kamas / conversionRate).toFixed(2);
+            });
+        }
+        
+        if (eurosInput) {
+            eurosInput.addEventListener('input', function() {
+                var euros = parseFloat(eurosInput.value) || 0;
+                kamasInput.value = Math.round(euros * conversionRate);
+            });
+        }
+        
+        if (editRateBtn) {
+            editRateBtn.addEventListener('click', saveConversionRate);
+        }
+        
+        updateRevenueDisplay();
+    }
+
     // ==================== AUTRES FONCTIONS ====================
     function openAdminPanel() { window.open('admin.html', '_blank'); }
 
@@ -1488,35 +1693,24 @@
         }
     }
 
-    // ==================== INITIALISATION DU CONVERTISSEUR ====================
-    function initConverter() {
-        loadConversionRate();
-        var kamasInput = document.getElementById('kamasInput');
-        var eurosInput = document.getElementById('eurosInput');
-        var editRateBtn = document.getElementById('editRateBtn');
+    // ==================== INITIALISATION ====================
+    function initXpCalculator() {
+        var inputs = ['xpGoal', 'xpCurrent', 'xpPerFight', 'pricePerFight'];
+        inputs.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', calculateXP);
+                el.addEventListener('change', calculateXP);
+            }
+        });
         
-        if (kamasInput) {
-            kamasInput.addEventListener('input', function() {
-                var kamas = parseFloat(kamasInput.value) || 0;
-                eurosInput.value = (kamas / conversionRate).toFixed(2);
-            });
-        }
+        document.getElementById('addToCartFromXp')?.addEventListener('click', addXpToCart);
+        document.getElementById('resetXpCalculator')?.addEventListener('click', resetXpCalculator);
         
-        if (eurosInput) {
-            eurosInput.addEventListener('input', function() {
-                var euros = parseFloat(eurosInput.value) || 0;
-                kamasInput.value = Math.round(euros * conversionRate);
-            });
-        }
-        
-        if (editRateBtn) {
-            editRateBtn.addEventListener('click', saveConversionRate);
-        }
-        
-        updateRevenueDisplay();
+        calculateXP();
     }
 
-    // Surcharge de updateProgress
+    // Surcharge de updateProgress pour inclure le convertisseur
     var originalUpdateProgress = updateProgress;
     updateProgress = function() {
         originalUpdateProgress();
@@ -1533,6 +1727,7 @@
         updateCharts();
         updateFilterOptions();
         updateCartBadge();
+        initXpCalculator();
         initConverter();
 
         document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
